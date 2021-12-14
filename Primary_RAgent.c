@@ -65,19 +65,19 @@ void Call_ReportChanges_Mirror() {
     //printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 1] = tm.month[0];
 
-    ts.val = tm.day;
+    ts.val = tm.day[0];
     //printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 2] = ts.byte[0];
 
-    ts.val = tm.hour;
+    ts.val = tm.hour[0];
     //printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 3] = ts.byte[0];
 
-    ts.val = tm.minutes;
+    ts.val = tm.minutes[0];
     //printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 4] = ts.byte[0];
 
-    ts.val = tm.second;
+    ts.val = tm.second[0];
     //printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 5] = ts.byte[0];
 
