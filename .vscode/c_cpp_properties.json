@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "E:\\\\Libraries\\\\MSYS2_64\\\\mingw64\\\\include\\\\c++\\\\10.3.0"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerPath": "E:/Libraries/MSYS2_64/mingw64/bin/g++.exe"
+        }
+    ],
+    "version": 4
+}
