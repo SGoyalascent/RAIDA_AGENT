@@ -123,7 +123,7 @@ void getLastModifiedTime() {
     tm.second[0] = dt->tm_sec;
     printf("local time: ");
     //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
-    printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+    printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day[0], tm.month[0],tm.year, tm.hour[0], tm.minutes[0], tm.second[0]);
 
     Call_ReportChanges_Mirror();
 
