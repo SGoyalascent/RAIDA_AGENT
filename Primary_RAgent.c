@@ -116,11 +116,11 @@ void getLastModifiedTime() {
     dt = localtime(&attrib.st_mtime);
 
     tm.year = dt->tm_year + 1900;
-    tm.month = dt->tm_mon;
-    tm.day = dt->tm_mday;
-    tm.hour = dt->tm_hour;
-    tm.minutes = dt->tm_min;
-    tm.second = dt->tm_sec;
+    tm.month[0] = dt->tm_mon;
+    tm.day[0] = dt->tm_mday;
+    tm.hour[0] = dt->tm_hour;
+    tm.minutes[0] = dt->tm_min;
+    tm.second[0] = dt->tm_sec;
     printf("local time: ");
     //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
     printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
