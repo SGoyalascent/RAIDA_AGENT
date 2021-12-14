@@ -89,7 +89,7 @@ void Call_ReportChanges_Mirror() {
 void getLastModifiedTime() {
 
     char path[256];
-    strcpy(execpath, "/opt/raida/Data");
+    strcpy(execpath, "/opt/RAIDA_AGENT/Testing/raida/Data");
 	strcpy(path,execpath);
 	//strcat(path,"/Data/...");
     strcat(path, "/coin_0/ANs/1.bin");
