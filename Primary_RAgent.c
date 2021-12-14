@@ -121,16 +121,49 @@ void getLastModifiedTime() {
     tm.hour = dt->tm_hour;
     tm.minutes = dt->tm_min;
     tm.second = dt->tm_sec;
-
+    printf("local time: ");
     printf("Last Modified Time1:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year, dt->tm_hour,dt->tm_min, dt->tm_sec);
     printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
     printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+
+    Call_ReportChanges_Mirror();
+
+    dt = gmtime(&attrib.st_mtime);
+
+    tm.year = dt->tm_year + 1900;
+    tm.month = dt->tm_mon;
+    tm.day = dt->tm_mday;
+    tm.hour = dt->tm_hour;
+    tm.minutes = dt->tm_min;
+    tm.second = dt->tm_sec;
+    printf("gmt: ");
+    printf("Last Modified Time1:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year, dt->tm_hour,dt->tm_min, dt->tm_sec);
+    printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
+    printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+
+    Call_ReportChanges_Mirror();
+
+    dt = localtime(&attrib.st_atime);
+
+    tm.year = dt->tm_year + 1900;
+    tm.month = dt->tm_mon;
+    tm.day = dt->tm_mday;
+    tm.hour = dt->tm_hour;
+    tm.minutes = dt->tm_min;
+    tm.second = dt->tm_sec;
+    printf("localtime: ");
+    printf("Last Access Time1:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year, dt->tm_hour,dt->tm_min, dt->tm_sec);
+    printf("Last Access Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
+    printf("Last Access Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+
+    Call_ReportChanges_Mirror();
+
 
 }
 
 int main() {
 
-    Call_ReportChanges_Mirror();
+    //Call_ReportChanges_Mirror();
     getLastModifiedTime();
 
     return 0;
