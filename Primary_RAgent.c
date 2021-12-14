@@ -58,30 +58,38 @@ void Call_ReportChanges_Mirror() {
     }
 
     ts.val = tm.year - 2000;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT] = ts.byte[0];
 
     ts.val = tm.month;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 1] = ts.byte[0];
 
     ts.val = tm.day;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 2] = ts.byte[0];
 
     ts.val = tm.hour;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 3] = ts.byte[0];
 
-    ts.val = tm.minute;
+    ts.val = tm.minutes;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 4] = ts.byte[0];
 
     ts.val = tm.second;
+    printf("%d %d\n", ts.val, ts.byte[0]);
     buffer[REQUEST_HEADER + CH_BYTES_CNT + 5] = ts.byte[0];
 
     printf("send_buffer:- ");
 
-    for(int i=0; i <= REQUEST_HEADER+CH_BYTES_CNT+TIMESTAMP_BYTES_CNT; i++) {
+    for(int i=0; i < REQUEST_HEADER+CH_BYTES_CNT+TIMESTAMP_BYTES_CNT; i++) {
 
         printf("%d ", buffer[i] );
     }
     printf("\n");
+
+
 
 }
 
@@ -89,10 +97,11 @@ void Call_ReportChanges_Mirror() {
 void getLastModifiedTime() {
 
     char path[256];
-    strcpy(execpath, "/opt/RAIDA_AGENT/Testing/raida/Data");
-	strcpy(path,execpath);
+    //strcpy(execpath, "/opt/RAIDA_AGENT/Testing/raida/Data");
+	//strcpy(path,execpath);
 	//strcat(path,"/Data/...");
-    strcat(path, "/coin_0/ANs/1.bin");
+    //strcat(path, "/coin_0/ANs/1.bin");
+    strcpy(path, "/opt/RAIDA_AGENT/Testing/1.bin");
     
     struct stat attrib;
     int status = stat(path, &attrib);
@@ -115,7 +124,7 @@ void getLastModifiedTime() {
 
     printf("Last Modified Time1:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year, dt->tm_hour,dt->tm_min, dt->tm_sec);
     printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
-    printf("Last Modified Time:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+    printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
 
 }
 
