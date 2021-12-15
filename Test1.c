@@ -18,14 +18,13 @@ int main() {
 
     DIR *dir;
     char *filename;
-    char *path = "/opt/Testing/Data";
+    //char *path = "/opt/Testing/Data";
     dir = opendir("."); //Enter directory path
     //Loop through directory entries
     while((dp = readdir(dir)) != NULL) {
 
         filename = dp->d_name;
-        printf("filename: %s\n", filename);
-        //Get Entry's information
+        printf("filename: %s  ", filename);
         if(stat(dp->d_name, &statbuf) == -1) {
             fprintf(stderr,"Error: %d  %s\n", errno, strerror(errno));
             continue;
@@ -33,17 +32,15 @@ int main() {
 
         tm = gmtime(&statbuf.st_mtime);
         
-
-        /*
         strftime(datestring, sizeof(datestring), " %x-%X", tm);
-        printf("datestring1: %s of filename: %s\n", datestring, dp->d_name);
+        printf("datestring: %s\n", datestring);
 
-        printf("datestring1: ");
+        printf("datestring: ");
         for(int i=0; i < sizeof(datestring); i++) {
              printf("%d  ", datestring[i]);
         }
         printf("\n");
-
+    /*
         strftime(datestring, sizeof(datestring), " %d-%m-%y-%Y  %H:%M:%S", tm);
         printf("datestring2: %s of filename: %s\n", datestring, dp->d_name);
 

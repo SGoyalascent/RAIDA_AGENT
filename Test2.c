@@ -16,31 +16,30 @@ void show_dir_content(char * path)
     struct stat statbuf;
     char datestring[256];
     char *filename;
-    char *filepath;
     struct tm *tm;
-    DIR * d = opendir(path); // open the path
-    printf(" path: %s\n", path);
-    if(d==NULL) {
+    DIR *d = opendir(path); // open the path
+    if(d == NULL) {
         return;  
     }
     // if we were able to read somehting from the directory
     while ((dir = readdir(d)) != NULL) 
     {
         // if the type is not directory
-        if(dir-> d_type != DT_DIR) {
+        if(dir->d_type == DT_REG) {
             
+            char f_path[500];
             filename = dir->d_name;
-            sprintf(filepath, "%s/%s", path, dir->d_name);
+            sprintf(f_path, "%s/%s", path, dir->d_name);
             printf("filename: %s", filename);
-            printf("  filepath: %s\n", filepath);
+            printf("  filepath: %s\n", f_path);
 
-            if(stat(dir->d_name, &statbuf) == -1) {
+            if(stat(f_path, &statbuf) == -1) {
                 fprintf(stderr,"Error: %s\n", strerror(errno));
                 continue;
             }
             tm = gmtime(&statbuf.st_mtime);
             strftime(datestring, sizeof(datestring), " %x-%X", tm);
-            printf("datestring1: %s of filename: %s\n", datestring, dir->d_name);
+            printf("datestring: %s\n", datestring);
         }
 
         // if it is a directory
