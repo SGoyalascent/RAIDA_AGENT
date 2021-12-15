@@ -6,6 +6,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 
 int main() {
@@ -18,7 +19,7 @@ int main() {
     DIR *dir;
     char *filename;
     char *path = "/opt/Testing/Data";
-    dir = opendir(path); //Enter directory path
+    dir = opendir("."); //Enter directory path
     //Loop through directory entries
     while((dp = readdir(dir)) != NULL) {
 
@@ -26,10 +27,12 @@ int main() {
         printf("filename: %s\n", filename);
         //Get Entry's information
         if(stat(dp->d_name, &statbuf) == -1) {
+            fprintf(stderr,"Error: %d  %s\n", errno, strerror(errno));
             continue;
         }
 
         tm = gmtime(&statbuf.st_mtime);
+        
 
         /*
         strftime(datestring, sizeof(datestring), " %x-%X", tm);
