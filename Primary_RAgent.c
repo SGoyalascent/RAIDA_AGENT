@@ -49,11 +49,16 @@ void Call_ReportChanges_Mirror() {
     unsigned char request_header[REQUEST_HEADER] = {0,0,2,0,0,45,0,0,0,0,0,0,22,22,0,1,0,0,0,0,0,0};
     memcpy(send_buffer,request_header,REQUEST_HEADER);
 
+// Add challenge(CH) in the Request Body
     for(int i=0; i < CH_BYTES_CNT; i++) {
 
         send_buffer[REQUEST_HEADER +i ] = i+1;
     }
 
+    getLastModifiedTime();
+
+//Assign timestamp bytes in the buffer
+// YY, MM, DD, HH, MM, SS
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT] = tm.day;
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 1] = tm.month;
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 2] = tm.year;
@@ -61,6 +66,7 @@ void Call_ReportChanges_Mirror() {
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 4] = ts.minutes;
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 5] = ts.second;
 
+//Request body End bytes
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 6] = 62;
     send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 7] = 62;
     int len = REQUEST_HEADER+CH_BYTES_CNT+TIMESTAMP_BYTES_CNT+CMD_END_BYTES_CNT;
@@ -71,7 +77,7 @@ void Call_ReportChanges_Mirror() {
     }
     printf("\n");
 
-    sendto(sockfd, (const char *)buffer, len, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+    sendto(sockfd, (const char *)send_buffer, len, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 
 }
 
@@ -103,11 +109,9 @@ void getLastModifiedTime() {
     tm.hour = dt->tm_hour;
     tm.minutes = dt->tm_min;
     tm.second = dt->tm_sec;
-    printf("local time: ");
+    printf("UTC time: ");
     //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
     printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
-
-    Call_ReportChanges_Mirror();
 
 }
 

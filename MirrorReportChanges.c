@@ -7,6 +7,7 @@
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX];
+struct timestamp req_tm;
 
 
 //-----------------------------------------------------------
@@ -233,12 +234,27 @@ void  CheckChanges() {
 	int req_header_min;
 	unsigned int index=0,size=0;
 	unsigned char status_code;
+	unsigned char recv_buffer[6];
 
 	if(validate_request_body_general(packet_len,req_body,&req_header_min)==0){
 		send_err_resp_header(EMPTY_REQ_BODY);
 		return;
 	}
 
+	index = req_header_min + CH_BYTES_CNT;
+	printf("recv_buffer: ");
+	for(int i=0; i < TIME_STAMP_BYTES_CNT;i++) {
+
+		recv_buffer[i] = udp_buffer[index+i];
+		printf("%d ", recv_buffer[i]);
+	}
+
+	req_tm.year = recv_buffer[0];
+	req_tm.month = recv_buffer[1];
+	req_tm.day = recv_buffer[2];
+	req_tm.hour = recv_buffer[3];
+	req_tm.minutes = recv_buffer[4];
+	req_tm.second = recv_buffer[5];
 
 
 }

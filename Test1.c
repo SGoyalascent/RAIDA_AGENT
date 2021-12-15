@@ -17,9 +17,10 @@ int main() {
 
     DIR *dir;
     char *filename;
-    dir = opendir("."); //Enter directory path
+    char *path = "/opt/Testing/Data";
+    dir = opendir(path); //Enter directory path
     //Loop through directory entries
-    while((dp = readdir(dir)) != NULL) {
+    while((dp = readdir_r(dir)) != NULL) {
 
         filename = dp->d_name;
         printf("filename: %s\n", filename);
@@ -30,7 +31,7 @@ int main() {
 
         tm = gmtime(&statbuf.st_mtime);
 
-        //Get localized date string
+        /*
         strftime(datestring, sizeof(datestring), " %x-%X", tm);
         printf("datestring1: %s of filename: %s\n", datestring, dp->d_name);
 
@@ -48,6 +49,7 @@ int main() {
              printf("%d  ", datestring[i]);
         }
         printf("\n");
+        */
     }
 
 
