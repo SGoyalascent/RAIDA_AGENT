@@ -12,10 +12,10 @@
 
 void show_dir_content(char * path)
 {
-    struct dirent * dir; // for the directory entries
+    struct dirent *dir; // for the directory entries
     struct stat statbuf;
     char datestring[256];
-    char *filename;
+    //char *filename;
     struct tm *tm;
     DIR *d = opendir(path); // open the path
     if(d == NULL) {
@@ -28,7 +28,9 @@ void show_dir_content(char * path)
         if(dir->d_type == DT_REG) {
             
             char f_path[500];
-            filename = dir->d_name;
+            char filename[256];
+            sprintf(filename, "%s",dir->d_name);
+            //filename = dir->d_name
             sprintf(f_path, "%s/%s", path, dir->d_name);
             printf("filename: %s", filename);
             printf("  filepath: %s\n", f_path);
@@ -45,7 +47,7 @@ void show_dir_content(char * path)
         // if it is a directory
         if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-            printf("%s ", dir->d_name);
+            printf("directory: %s ", dir->d_name);
             char d_path[500]; 
             sprintf(d_path, "%s/%s", path, dir->d_name);
             printf("  dirpath: %s\n", d_path);

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 
 
 int main() {
@@ -15,6 +16,9 @@ int main() {
     struct stat statbuf;
     char datestring[256];
     struct tm *tm;
+    time_t t1 = 0, t2;
+    double time_dif;
+
 
     DIR *dir;
     char *filename;
@@ -26,33 +30,21 @@ int main() {
         filename = dp->d_name;
         printf("filename: %s  ", filename);
         if(stat(dp->d_name, &statbuf) == -1) {
-            fprintf(stderr,"Error: %d  %s\n", errno, strerror(errno));
+            fprintf(stderr,"Error: %s\n", strerror(errno));
             continue;
         }
 
-        tm = gmtime(&statbuf.st_mtime);
-        
+        tm = gmtime(&statbuf.st_mtime); 
+        t2 = statbuf.st_mtime;
         strftime(datestring, sizeof(datestring), " %x-%X", tm);
-        printf("datestring: %s\n", datestring);
-
-        printf("datestring: ");
-        for(int i=0; i < sizeof(datestring); i++) {
-             printf("%d  ", datestring[i]);
+        //printf("datestring: %s\n", datestring);
+        
+        time_dif = difftime(t2, t1);
+        if(time_dif > 0) {
+            printf("datestring: %s\n", datestring);
         }
-        printf("\n");
-    /*
-        strftime(datestring, sizeof(datestring), " %d-%m-%y-%Y  %H:%M:%S", tm);
-        printf("datestring2: %s of filename: %s\n", datestring, dp->d_name);
 
-        printf("datestring2: ");
-        for(int i=0; i < sizeof(datestring); i++) {
-             printf("%d  ", datestring[i]);
-        }
-        printf("\n");
-        */
+        t1 = t2;
+
     }
-
-
-
-
 }
