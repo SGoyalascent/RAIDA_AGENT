@@ -20,7 +20,7 @@ int main() {
     char *path = "/opt/Testing/Data";
     dir = opendir(path); //Enter directory path
     //Loop through directory entries
-    while((dp = readdir_r(dir)) != NULL) {
+    while((dp = readdir(dir)) != NULL) {
 
         filename = dp->d_name;
         printf("filename: %s\n", filename);
