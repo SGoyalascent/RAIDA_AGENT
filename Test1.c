@@ -9,13 +9,10 @@
 #include <string.h>
 #include <errno.h>
 
-
-int main() {
-
+void show_dir_content(char* path) {
     struct dirent *dir; 
     struct stat statbuf;
     char datestring[256];
-    char path[500];
     struct tm *dt;
     time_t t2;
     double time_dif;
@@ -91,6 +88,10 @@ int main() {
         }
     }
     closedir(d); 
+}
+int main() {
 
-    
+    char *path = "/opt/Testing/Data";
+    show_dir_content(path);
+    return(0);
 }
