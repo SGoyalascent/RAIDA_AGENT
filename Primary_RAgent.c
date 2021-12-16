@@ -55,7 +55,7 @@ void Call_ReportChanges_Mirror() {
         send_buffer[REQUEST_HEADER +i ] = i+1;
     }
 
-    getLastModifiedTime();
+    show_dir_content();
 
 //Assign timestamp bytes in the buffer
 // YY, MM, DD, HH, MM, SS
@@ -82,37 +82,67 @@ void Call_ReportChanges_Mirror() {
 }
 
 //Get the Last Modified Time of the files in the  Directory
-void getLastModifiedTime() {
-
-    char path[256];
-    //strcpy(execpath, "/opt/RAIDA_AGENT/Testing/raida/Data");
-	//strcpy(path,execpath);
-	//strcat(path,"/Data/...");
-    //strcat(path, "/coin_0/ANs/1.bin");
-    strcpy(path, "/opt/RAIDA_AGENT/Testing/1.bin");
-    
-    struct stat attrib;
-    int status = stat(path, &attrib);
-
-    if(status != 0) {
-        printf("error\n");
-        return;
-    }
-
+void show_dir_content(char * path)
+{
+    struct dirent *dir; 
+    struct stat statbuf;
+    char datestring[256];
     struct tm *dt;
+    time_t t1 = 0, t2;
+    double time_dif;
+    DIR *d = opendir(path); 
+    if(d == NULL) {
+        return;  
+    }
+    while ((dir = readdir(d)) != NULL) 
+    {
+        // if the type is not directory
+        if(dir->d_type == DT_REG) {
+            
+            char f_path[500];
+            char filename[256];
+            sprintf(filename, "%s",dir->d_name);
+            sprintf(f_path, "%s/%s", path, dir->d_name);
+            printf("filename: %s", filename);
+            //printf("  filepath: %s\n", f_path);
 
-    dt = gmtime(&attrib.st_mtime);
-    
-    tm.year = dt->tm_year - 100;
-    tm.month = dt->tm_mon;
-    tm.day = dt->tm_mday;
-    tm.hour = dt->tm_hour;
-    tm.minutes = dt->tm_min;
-    tm.second = dt->tm_sec;
-    printf("UTC time: ");
-    //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
-    printf("Last Modified Time3:- %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+            if(stat(f_path, &statbuf) == -1) {
+                fprintf(stderr,"Error: %s\n", strerror(errno));
+                continue;
+            }
+            dt = gmtime(&statbuf.st_mtime);
+            t2 = statbuf.st_mtime;
+            strftime(datestring, sizeof(datestring), " %x-%X", tm);
+            printf("datestring: %s\n", datestring);
 
+            time_dif = difftime(t2, t1);
+            printf("time_diff: %g\n", time_dif);
+            if(time_dif > 0) {
+                t1 = t2;
+                printf("datestring: %s  ", datestring);
+
+                tm.year = dt->tm_year - 100;
+                tm.month = dt->tm_mon;
+                tm.day = dt->tm_mday;
+                tm.hour = dt->tm_hour;
+                tm.minutes = dt->tm_min;
+                tm.second = dt->tm_sec;
+                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+                //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
+            }
+        }
+
+        // if it is a directory
+        if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
+        {
+            printf("directory: %s ", dir->d_name);
+            char d_path[500]; 
+            sprintf(d_path, "%s/%s", path, dir->d_name);
+            printf("  dirpath: %s\n", d_path);
+            show_dir_content(d_path); // recall with the new path
+        }
+    }
+    closedir(d);
 }
 
 void Receive_response_Report_Changes() {
@@ -140,8 +170,15 @@ void Receive_response_Report_Changes() {
 
 int main() {
 
-    //Call_ReportChanges_Mirror();
-    getLastModifiedTime();
+    //char path[256];
+    //strcpy(execpath, "/opt/RAIDA_AGENT/Testing/raida/Data");
+	//strcpy(path,execpath);
+	//strcat(path,"/Data/...");
+    //strcat(path, "/coin_0/ANs/1.bin");
+    //strcpy(path, "/opt/RAIDA_AGENT/Testing/1.bin");
+
+    char *path = "/opt/Testing/Data";
+    show_dir_content(path);
 
     return 0;
 

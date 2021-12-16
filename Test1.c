@@ -37,14 +37,16 @@ int main() {
         tm = gmtime(&statbuf.st_mtime); 
         t2 = statbuf.st_mtime;
         strftime(datestring, sizeof(datestring), " %x-%X", tm);
-        //printf("datestring: %s\n", datestring);
+        printf("datestring: %s\n", datestring);
         
         time_dif = difftime(t2, t1);
+        printf("time_diff: %g", time_dif);
         if(time_dif > 0) {
+            t1 = t2;
             printf("datestring: %s\n", datestring);
         }
 
-        t1 = t2;
-
     }
+
+    //printf("Last Modified Time: ");
 }

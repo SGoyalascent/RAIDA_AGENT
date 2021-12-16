@@ -6,20 +6,7 @@ namespace fs = std::filesystem;
 
 int main()
 {
-    std::string path = "opt/raida/";
-    for (const auto & entry : fs::directory_iterator(path)) {
-        std::cout << "Entry_Path: " <<entry.path() << std::endl;
-        std::cout << "Entry" <<entry << std::endl;
-    }
-/********************************/
-    /*
-    fs::path filePath("opt/raida/agent.primary.config");
-    std::error_code ec;
-    if(fs::exists(filepath, ec)) {
-        cout <<"File exists"<<endl;
-        std::cerr <<ec.message() ;
-    }
-    */
+    
 
 /**************************/
 /*
@@ -74,42 +61,6 @@ int main() {
         std::cerr <<doesn't exist<< endl;
     }
 }
-
-*/
-
-/*
-
-int CheckRaidaConfig() {
-
-    ifstream file;
-
-    string path_config_1 = "opt/raida/agent.primary.config"; 
-    string path_config_2 = "opt/raida/agent.mirror.config";
-    string path_config_3 = "opt/raida/agent.witness.config";
-
-    file.open(path_config_1);
-    if(file.is_open()) {
-        file.close();
-        return 1;
-    }
-    file.open(path_config_2);
-    if(file.is_open()) {
-        file.close();
-        return 2;
-    }
-    file.open(path_config_3);
-    if(file.is_open()) {
-        file.close();
-        return 3;
-    }
-}
-
-*/
-
-/*
- std::filesystem::path p("the_file");
-    while(std::filesystem::exists(p));
-    std::cout << "gone\n";
 
 */
 
