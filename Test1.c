@@ -36,7 +36,7 @@ void show_dir_content(char* path) {
                 fprintf(stderr,"Error: %s\n", strerror(errno));
                 continue;
             }
-
+            int size2 =0;
             printf("file_name: ");
             for(int i=0; i < sizeof(filename); i++) {
                 
@@ -44,17 +44,23 @@ void show_dir_content(char* path) {
                 if(filename[i] == '\0') {
                     break;
                 }
+                size2++;
             }
             printf("\n");
-            printf("dir_path: ");
+            printf("size2: %d\n", size2);
+
+            size2 =0;
+            printf("file_path: ");
             for(int i=0; i < sizeof(f_path); i++) {
                 
                 printf("%c ", f_path[i]);
                 if(f_path[i] == '\0') {
                     break;
                 }
+                size2++;
             }
             printf("\n");
+            printf("size2: %d\n", size2);
             
         }
 
