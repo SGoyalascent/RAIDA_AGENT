@@ -12,41 +12,85 @@
 
 int main() {
 
-    struct dirent *dp;
+    struct dirent *dir; 
     struct stat statbuf;
     char datestring[256];
-    struct tm *tm;
-    time_t t1 = 0, t2;
+    char path[500];
+    struct tm *dt;
+    time_t t2;
     double time_dif;
-
-
-    DIR *dir;
-    char *filename;
-    //char *path = "/opt/Testing/Data";
-    dir = opendir("."); //Enter directory path
-    //Loop through directory entries
-    while((dp = readdir(dir)) != NULL) {
-
-        filename = dp->d_name;
-        printf("filename: %s  ", filename);
-        if(stat(dp->d_name, &statbuf) == -1) {
-            fprintf(stderr,"Error: %s\n", strerror(errno));
-            continue;
-        }
-
-        tm = gmtime(&statbuf.st_mtime); 
-        t2 = statbuf.st_mtime;
-        strftime(datestring, sizeof(datestring), " %x-%X", tm);
-        printf("datestring: %s\n", datestring);
-        
-        time_dif = difftime(t2, t1);
-        printf("time_diff: %g", time_dif);
-        if(time_dif > 0) {
-            t1 = t2;
-            printf("datestring: %s\n", datestring);
-        }
-
+    DIR *d = opendir(path); 
+    if(d == NULL) {
+        return;  
     }
+    while ((dir = readdir(d)) != NULL) 
+    {
+        // if the type is not directory
+        if(dir->d_type == DT_REG) {
+            
+            char f_path[500];
+            char filename[256];
+            sprintf(filename, "%s",dir->d_name);
+            sprintf(f_path, "%s/%s", path, dir->d_name);
+            printf("filename: %s", filename);
+            printf("  filepath: %s\n", f_path);
 
-    //printf("Last Modified Time: ");
+            if(stat(f_path, &statbuf) == -1) {
+                fprintf(stderr,"Error: %s\n", strerror(errno));
+                continue;
+            }
+
+            printf("file_name: ");
+            for(int i=0; i < sizeof(filename); i++) {
+                
+                printf("%c ", filename[i]);
+                if(filename[i] == '\0') {
+                    break;
+                }
+            }
+            printf("\n");
+            printf("dir_path: ");
+            for(int i=0; i < sizeof(f_path); i++) {
+                
+                printf("%c ", f_path[i]);
+                if(f_path[i] == '\0') {
+                    break;
+                }
+            }
+            printf("\n");
+            
+        }
+
+        // if it is a directory
+        if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
+        {
+            char d_path[500]; 
+            char dir_name[256];
+            sprintf(d_path, "%s/%s", path, dir->d_name);
+            sprintf(dir_name, "%s", dir->d_name);
+            printf("dir_name: ");
+            for(int i=0; i < sizeof(dir_name); i++) {
+                
+                printf("%c ", dir_name[i]);
+                if(dir_name[i] == '\0') {
+                    break;
+                }
+            }
+            printf("\n");
+            printf("dir_path: ");
+            for(int i=0; i < sizeof(d_path); i++) {
+                
+                printf("%c ", d_path[i]);
+                if(d_path[i] == '\0') {
+                    break;
+                }
+            }
+            printf("\n");
+
+            show_dir_content(d_path); 
+        }
+    }
+    closedir(d); 
+
+    
 }

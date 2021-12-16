@@ -180,6 +180,7 @@
 #define  FIFO_RESPONSE 						1
 
 
+
 struct timestamp {
 
     unsigned char year;
@@ -191,7 +192,7 @@ struct timestamp {
 };
 
 extern struct timestamp tm;
-extern struct timestamp req_tm;
+extern struct timestamp recv_tm;
 
 extern int sockfd;
 extern unsigned char response_flg;

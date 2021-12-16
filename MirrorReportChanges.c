@@ -7,7 +7,10 @@
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX];
-struct timestamp req_tm;
+struct timestamp recv_tm;
+time_t t3;
+
+#define SN_SIZE  14
 
 
 //-----------------------------------------------------------
@@ -217,6 +220,8 @@ unsigned char validate_request_body_general(unsigned int packet_len,unsigned int
 	}
 	return 1;
 }
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 
 void Send_Response_PrimaryAgent(unsigned char status_code,unsigned int size){
 	int len=sizeof(cliaddr);
@@ -227,6 +232,66 @@ void Send_Response_PrimaryAgent(unsigned char status_code,unsigned int size){
 		len);
 }
 
+void show_dir_content(char * path)
+{
+    struct dirent *dir; 
+    struct stat statbuf;
+    char datestring[256];
+    struct tm *dt;
+    time_t t2;
+    double time_dif;
+    DIR *d = opendir(path); 
+    if(d == NULL) {
+        return;  
+    }
+    while ((dir = readdir(d)) != NULL) 
+    {
+        // if the type is not directory
+        if(dir->d_type == DT_REG) {
+            
+            char f_path[500];
+            char filename[256];
+            sprintf(filename, "%s",dir->d_name);
+            sprintf(f_path, "%s/%s", path, dir->d_name);
+            printf("filename: %s", filename);
+            printf("  filepath: %s\n", f_path);
+
+            if(stat(f_path, &statbuf) == -1) {
+                fprintf(stderr,"Error: %s\n", strerror(errno));
+                continue;
+            }
+            dt = gmtime(&statbuf.st_mtime);
+            t2 = statbuf.st_mtime;
+            strftime(datestring, sizeof(datestring), " %x-%X", dt);
+            printf("datestring: %s\n", datestring);
+
+            time_dif = difftime(t2, t3);
+            printf("time_diff: %g\n", time_dif);
+            if(time_dif > 0) {
+				printf("File Updated.  ");
+                printf("datestring: %s  ", datestring);
+
+                //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
+                printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
+
+            }
+        }
+
+        // if it is a directory
+        if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
+        {
+            printf("directory: %s ", dir->d_name);
+            char d_path[500]; 
+            sprintf(d_path, "%s/%s", path, dir->d_name);
+            printf("  dirpath: %s\n", d_path);
+            show_dir_content(d_path); // recall with the new path
+        }
+    }
+    closedir(d);
+}
+
+void 
+
 
 void  CheckChanges() {
 
@@ -234,7 +299,7 @@ void  CheckChanges() {
 	int req_header_min;
 	unsigned int index=0,size=0;
 	unsigned char status_code;
-	unsigned char recv_buffer[6];
+	unsigned char recv_buffer[TIMESTAMP_BYTES_CNT];
 
 	if(validate_request_body_general(packet_len,req_body,&req_header_min)==0){
 		send_err_resp_header(EMPTY_REQ_BODY);
@@ -249,12 +314,36 @@ void  CheckChanges() {
 		printf("%d ", recv_buffer[i]);
 	}
 
-	req_tm.year = recv_buffer[0];
-	req_tm.month = recv_buffer[1];
-	req_tm.day = recv_buffer[2];
-	req_tm.hour = recv_buffer[3];
-	req_tm.minutes = recv_buffer[4];
-	req_tm.second = recv_buffer[5];
+	recv_tm.day = recv_buffer[0];
+	recv_tm.month = recv_buffer[1];
+	recv_tm.year = recv_buffer[2] ;
+	recv_tm.hour = recv_buffer[3];
+	recv_tm.minutes = recv_buffer[4];
+	recv_tm.second = recv_buffer[5];
+
+	struct tm *recv_dt;
+
+	recv_dt->tm_year = recv_tm.year;
+	recv_dt->tm_mon = recv_tm.month;
+	recv_dt->tm_mday = recv_tm.day;
+	recv_dt->tm_hour = recv_tm.hour;
+	recv_dt->tm_min = recv_tm.minutes;
+	recv_dt->tm_sec = recv_tm.second;
+
+	
+
+	int t3 = mktime(recv_dt);
+	char date[500];
+	if(t3 == -1) {
+		printf("Unable to represent received time in UTC using mktime\n");
+	}
+	else {
+		strftime(date, sizeof(date), "%c", recv_dt);
+		printf("date: %s\n", date);
+	}
+
+	char *path = "/opt/Testing/Data";
+	show_dir_content(path);
 
 
 }

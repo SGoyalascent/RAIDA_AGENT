@@ -43,6 +43,10 @@ int init_udp_socket() {
 
 }
 
+void Send_Request_Report_Changes_Mirror() {
+
+}
+
 //Send request to the Mirror Report Changes Service
 void Call_ReportChanges_Mirror() {
 
@@ -88,7 +92,8 @@ void show_dir_content(char * path)
     struct stat statbuf;
     char datestring[256];
     struct tm *dt;
-    time_t t1 = 0, t2;
+    time_t t1 = 0;
+    time_t t2;
     double time_dif;
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -121,7 +126,7 @@ void show_dir_content(char * path)
                 t1 = t2;
                 printf("datestring: %s  ", datestring);
 
-                tm.year = dt->tm_year - 100;
+                tm.year = dt->tm_year;
                 tm.month = dt->tm_mon;
                 tm.day = dt->tm_mday;
                 tm.hour = dt->tm_hour;
@@ -145,7 +150,7 @@ void show_dir_content(char * path)
     closedir(d);
 }
 
-void Receive_response_Report_Changes() {
+void Receive_response_Report_Changes_Mirror() {
     int n;
     n = recvfrom(sockfd, (char *)recv_buffer, MAXLINE, 
 	                MSG_WAITALL, (struct sockaddr *) &servaddr,
