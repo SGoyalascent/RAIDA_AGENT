@@ -32,6 +32,9 @@ void show_dir_content(char* path) {
             char f_path[500];
             char filename[256];
             char sub_path[500];
+            char coin[20];
+            char table[20];
+            char serial[20];
             sprintf(filename, "%s",dir->d_name);
             sprintf(f_path, "%s/%s", path, dir->d_name);
             printf("filename: %s  filepath: %s\n",filename, f_path);
@@ -42,8 +45,13 @@ void show_dir_content(char* path) {
             strcpy(sub_path, f_path+path_len);
             printf("sub_path: %s\n", sub_path);
 
+            char *token;
+            token = strtok(sub_path, "/");
+            while(token != NULL){
+                printf("token: %s\n", token); 
 
-            
+                token = strtok(NULL, "/");
+            }
         }
         // if it is a directory
         if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
