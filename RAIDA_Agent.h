@@ -178,7 +178,12 @@
 //--------------------------------------------------------------------------	
 #define  UDP_RESPONSE 						0
 #define  FIFO_RESPONSE 						1
-
+//----------------------------------------------------------
+#define ID_ANS                0
+#define ID_OWNERS             1
+#define ID_EMAIL_RECOVER      2
+#define ID_STATEMENTS         3 
+#define ID_LOSS_COIN          4
 
 
 struct timestamp {

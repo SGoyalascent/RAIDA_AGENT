@@ -29,26 +29,27 @@ void show_dir_content(char* path) {
             char filename[256];
             sprintf(filename, "%s",dir->d_name);
             sprintf(f_path, "%s/%s", path, dir->d_name);
-            printf("filename: %s", filename);
-            printf("  filepath: %s\n", f_path);
+            printf("filename: %s  filepath: %s\n",filename, f_path);
 
             if(stat(f_path, &statbuf) == -1) {
                 fprintf(stderr,"Error: %s\n", strerror(errno));
                 continue;
             }
-            int size2 =0;
+            
+            /*
+            int size1 =0;
             printf("file_name: ");
             for(int i=0; i < sizeof(filename); i++) {
                 
-                printf("%c ", filename[i]);
+                //printf("%c ", filename[i]);
                 if(filename[i] == '\0') {
                     break;
                 }
-                size2++;
+                size1++;
             }
             printf("\n");
-            printf("size2: %d\n", size2);
-
+            printf("size1: %d\n", size1);
+    
             size2 =0;
             printf("file_path: ");
             for(int i=0; i < sizeof(f_path); i++) {
@@ -60,10 +61,9 @@ void show_dir_content(char* path) {
                 size2++;
             }
             printf("\n");
-            printf("size2: %d\n", size2);
+            printf("size2: %d\n", size2); */
             
         }
-
         // if it is a directory
         if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
@@ -71,15 +71,20 @@ void show_dir_content(char* path) {
             char dir_name[256];
             sprintf(d_path, "%s/%s", path, dir->d_name);
             sprintf(dir_name, "%s", dir->d_name);
+            /*
+            int size2 = 0;
             printf("dir_name: ");
             for(int i=0; i < sizeof(dir_name); i++) {
                 
-                printf("%c ", dir_name[i]);
+                //printf("%c ", dir_name[i]);
                 if(dir_name[i] == '\0') {
                     break;
                 }
+                size2++;
             }
             printf("\n");
+            printf("size2: %d\n", size2);
+            
             printf("dir_path: ");
             for(int i=0; i < sizeof(d_path); i++) {
                 
@@ -88,7 +93,7 @@ void show_dir_content(char* path) {
                     break;
                 }
             }
-            printf("\n");
+            printf("\n"); */
 
             show_dir_content(d_path); 
         }
