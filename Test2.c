@@ -19,6 +19,8 @@ void show_dir_content(char* path) {
     time_t t2;
     double time_dif;
     char org_path[256] = "/opt/Testing/Data";
+    unsigned char coin_id[10];
+    unsigned char serial_no[10];
     int path_len = strlen(org_path);
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -42,16 +44,37 @@ void show_dir_content(char* path) {
             int file_len = strlen(filename);
             int f_path_len = strlen(f_path);
 
-            strcpy(sub_path, f_path+path_len);
+            strcpy(sub_path, f_path+path_len+1);
             printf("sub_path: %s\n", sub_path);
 
-            char *token;
-            token = strtok(sub_path, "/");
-            while(token != NULL){
-                printf("token: %s\n", token); 
+            
+            if(strcmp(sub_path, filename) != 0) {
+                char *token;
+                token = strtok(sub_path, "/");
+                strcpy(coin, token);
 
                 token = strtok(NULL, "/");
+                strcpy(table, token);
+
+                token = strtok(NULL, "/");
+                strcpy(serial, token);
+
+                
+                token = strtok(coin, "_");
+                token = strtok(NULL,"_");
+                strcpy(coin_id, token);
+                printf("coin_id: %s  ", coin_id);
+                int c_id =stoi(coin_id);
+                printf("c_id: %d\n", c_id);
+
+                token = strtok(serial, ".");
+                strcpy(serial_no, token);
+                printf("serial_no: %s  ", serial_no);
+                int sn_no = atoi(serial);
+                printf("sn_no: %s\n", sn_no);
             }
+            
+
         }
         // if it is a directory
         if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
