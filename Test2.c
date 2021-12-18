@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 
 unsigned char resp_body[5000];
 
@@ -64,14 +65,14 @@ void show_dir_content(char* path) {
                 token = strtok(NULL,"_");
                 strcpy(coin_id, token);
                 printf("coin_id: %s  ", coin_id);
-                int c_id =stoi(coin_id);
+                int c = atoi(coin_id);
                 printf("c_id: %d\n", c_id);
 
                 token = strtok(serial, ".");
                 strcpy(serial_no, token);
                 printf("serial_no: %s  ", serial_no);
                 int sn_no = atoi(serial);
-                printf("sn_no: %s\n", sn_no);
+                printf("sn_no: %d\n", sn_no);
             }
             
 
