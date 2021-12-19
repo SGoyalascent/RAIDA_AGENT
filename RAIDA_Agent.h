@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <dirent.h>
+#include <errno.h>
+#include <stdint.h>
 
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
@@ -151,6 +153,8 @@
 #define FIX_ALL_TICKET_ZERO					90
 #define LEGACY_RAIDA_TIME_OUT					100
 #define LEGACY_RAIDA_FAIL						101
+#define RAIDA_AGENT_NO_CHANGES              101
+#define MIRROR_REPORT_RETURNED              106
 #define IDENTIFY_COIN_FOUND					192
 #define IDENTIFY_COIN_NOT_FOUND				193
 #define SYNC_ADD_COIN_EXIST					200
@@ -185,6 +189,8 @@
 #define ID_STATEMENTS         3 
 #define ID_LOSS_COIN          4
 
+#define SN_SIZE  14
+
 
 struct timestamp {
 
@@ -208,6 +214,16 @@ extern struct sockaddr_in servaddr, cliaddr;
 extern long time_stamp_before,time_stamp_after;
 extern unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
 
+extern unsigned char udp_response[MAXLINE];
+extern time_t t1;
+extern unsigned int coin_id;
+extern unsigned int table_id;
+extern unsigned int serial_no;
+extern unsigned int index = RES_HS+HS_BYTES_CNT;
+extern unsigned int index_resp = 0;
+extern unsigned int frame_count = 0;
+extern unsigned int frame_no = 0;
+
 union coversion{
 	uint32_t val32;
 	unsigned char data[4];
@@ -219,6 +235,15 @@ union serial_no {
 	unsigned char buffer[3];
 };
 extern union serial_no sn_no;
+
+union respbody {
+
+    unsigned int val;
+    unsigned byte_coin[2];
+    unsigned byte_sn[4];
+};
+
+extern union respbody bytes;
 
 //------------------------------------------------------------------------
 int listen_request(); 

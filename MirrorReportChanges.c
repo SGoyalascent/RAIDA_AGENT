@@ -7,8 +7,19 @@
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX];
+unsigned char udp_response[MAXLINE];
+time_t t1;
+unsigned int coin_id;
+unsigned int table_id;
+unsigned int serial_no;
+unsigned int index = RES_HS+HS_BYTES_CNT;
+unsigned int index_resp = 0;
+unsigned int frame_count = 0;
+unsigned int frame_no = 0;
 
-#define SN_SIZE  14
+union respbody bytes;
+
+
 
 
 //-----------------------------------------------------------
@@ -17,33 +28,6 @@ unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX];
 int init_udp_socket(){}
 
 void ListenRequest_PrimaryAgent() {}
-
-//-----------------------------------------------------------
-// Prepare response and send it.
-//-----------------------------------------------------------
-void prepare_resp_header(unsigned char status_code){
-	unsigned char ex_time;
-	time_stamp_after = get_time_cs();
-	if((time_stamp_after-time_stamp_before) > 255){
-		ex_time = 255;
-	}else{
-		ex_time= time_stamp_after-time_stamp_before;
-	}
-
-	response[RES_RI] = server_config_obj.raida_id;
-	response[RES_SH] = 0;
-	response[RES_SS] = status_code;
-	response[RES_EX] = ex_time;
-	response[RES_RE] = 0;
-	response[RES_RE+1] = 0;
-	response[RES_EC] = udp_buffer[REQ_EC];
-	response[RES_EC+1] = udp_buffer[REQ_EC+1];
-	response[RES_HS] = 0;
-	response[RES_HS+1] = 0;
-	response[RES_HS+2] = 0;
-	response[RES_HS+3] = 0;
-
-}
 
 //-----------------------------------------------------------
 //  Validate request header
@@ -126,116 +110,214 @@ unsigned char validate_request_body_general(unsigned int packet_len,unsigned int
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
 
+
+
 void Send_Response_PrimaryAgent(unsigned char status_code,unsigned int size){
 	int len=sizeof(cliaddr);
 	char * myfifo = "/tmp/myfifo";
-	prepare_resp_header(status_code);
+	prepare_mirror_resp_header(status_code);
 	sendto(sockfd, (const char *)response, size,
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
 		len);
 }
 
-void show_dir_content(char * path)
+void prepare_mirror_resp_header(unsigned char status_code){
+	unsigned char ex_time;
+	time_stamp_after = get_time_cs();
+	if((time_stamp_after-time_stamp_before) > 255){
+		ex_time = 255;
+	}else{
+		ex_time= time_stamp_after-time_stamp_before;
+	}
+
+    bytes.val = frame_count;
+
+	udp_response[RES_RI] = server_config_obj.raida_id;
+	udp_response[RES_SH] = 0;
+	udp_response[RES_SS] = status_code;
+	udp_response[RES_EX] = ex_time;
+	udp_response[RES_RE] = bytes.byte_coin[0];
+	udp_response[RES_RE+1] = bytes.byte_coin[1];
+	udp_response[RES_EC] = udp_buffer[REQ_EC];
+	udp_response[RES_EC+1] = udp_buffer[REQ_EC+1];
+	udp_response[RES_HS] = 0;
+	udp_response[RES_HS+1] = 0;
+	udp_response[RES_HS+2] = 0;
+	udp_response[RES_HS+3] = 0;
+
+}   
+
+void prepare_udp_resp_body() {
+
+    int resp_length = index_resp;
+	
+    int current_length = resp_length;
+    int total_frames = (resp_length/(MAXLINE-3-index)) + 1;
+    int frames = total_frames;
+    unsigned char status_code = MIRROR_REPORT_RETURNED;
+    int i =0;
+    unsigned int size = 0;
+
+	if(resp_length == 0) {
+		status_code = RAIDA_AGENT_NO_CHANGES;
+		size = RES_HS+HS_BYTES_CNT;
+		Send_Response_PrimaryAgent(status_code, size);
+		return;
+	}
+
+    while(frames >= 1) {
+
+        if(frames > 1) {
+            frame_no++;
+            memcpy(udp_response[index], response[i], 1008);
+            i = i+1008;
+            current_length = current_length - 1008;
+            udp_response[index+1008+0] = '\n';
+            udp_response[index+1008+1] = '\n';
+            udp_response[index+1008+2] = '\n';
+            size = index+1008+3;
+            Send_Response_PrimaryAgent(status_code, size);
+
+        }
+        if(frames == 1) {
+            frame_no++;
+            memcpy(udp_response[index], response[i], current_length);
+            udp_response[index+current_length+0] = '\0';
+            udp_response[index+current_length+1] = '\0';
+            udp_response[index+current_length+2] = '\0';
+            size = current_length+index+3;
+            Send_Response_PrimaryAgent(status_code, size);
+        }
+        frames--;
+    }
+
+
+}
+
+int prepare_resp_body(int index_resp) {
+    
+    bytes.val = coin_id;
+
+    response[index_resp+0] = bytes.byte_coin[0];
+    response[index_resp+1] = bytes.byte_coin[1];
+    response[index_resp+2] = table_id;
+
+    bytes.val = serial_no;
+
+    response[index_resp+3] = bytes.byte_sn[0];
+    response[index_resp+4] = bytes.byte_sn[1];
+    response[index_resp+5] = bytes.byte_sn[2];
+    response[index_resp+6] = bytes.byte_sn[3];
+    
+    return (index_resp+7);
+}
+
+void get_ModifiedFiles(char * path)
 {
     struct dirent *dir; 
     struct stat statbuf;
-    char datestring[256];
     struct tm *dt;
-    time_t t2;
-    double time_dif;
-	char org_path[256] = "/opt/Testing/Data";
-    unsigned char coin_id[10];
-    unsigned char serial_no[10];
-    int path_len = strlen(org_path);
+    
+	char root_path[256] = "/opt/Testing/Data";
+    int path_len = strlen(root_path);
+
     DIR *d = opendir(path); 
     if(d == NULL) {
         return;  
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        // if the type is not directory
+        char df_path[500];
+        char df_name[256];
+        sprintf(df_name, "%s",dir->d_name);
+        sprintf(df_path, "%s/%s", path, dir->d_name);
+
         if(dir->d_type == DT_REG) {
             
-            char f_path[500];
-            char filename[256];
-			char sub_path[500];
-            char coin[20];
-            char table[20];
-            char serial[20];
-            sprintf(filename, "%s",dir->d_name);
-            sprintf(f_path, "%s/%s", path, dir->d_name);
-            printf("filename: %s", filename);
-            printf("  filepath: %s\n", f_path);
+			printf("filename: %s  filepath: %s\n", df_name, df_path);
 
-            if(stat(f_path, &statbuf) == -1) {
+            //Compare timestamps
+            time_t t2;
+            char datestring[256];
+            double time_dif;
+            char sub_path[500];
+
+            if(stat(df_path, &statbuf) == -1) {
                 fprintf(stderr,"Error: %s\n", strerror(errno));
                 continue;
             }
+
+            strcpy(sub_path, df_path+path_len+1);
+            printf("sub_path: %s\n", sub_path);
+
+            if(strcmp(sub_path, df_name) == 0) {
+                continue;
+            }
+
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
             printf("datestring: %s\n", datestring);
-
-            time_dif = difftime(t2, t3);
+            printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
+                                                                                dt->tm_hour,dt->tm_min, dt->tm_sec );
+        
+            time_dif = difftime(t2, t1);
             printf("time_diff: %g\n", time_dif);
-            if(time_dif > 0) {
-				printf("File Updated.  ");
-                printf("datestring: %s  ", datestring);
-
-                //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
-                printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
-
-				strcpy(sub_path, f_path+path_len+1);
-            	printf("sub_path: %s\n", sub_path);
-
-				if(strcmp(sub_path, filename) != 0) {
-                char *token;
-                token = strtok(sub_path, "/");
-                strcpy(coin, token);
-
-                token = strtok(NULL, "/");
-                strcpy(table, token);
-
-                token = strtok(NULL, "/");
-                strcpy(serial, token);
-
-                
-                token = strtok(coin, "_");
-                token = strtok(NULL,"_");
-                strcpy(coin_id, token);
-                printf("coin_id: %s  ", coin_id);
-                int c = atoi(coin_id);
-                printf("c_id: %d\n", c_id);
-
-                token = strtok(serial, ".");
-                strcpy(serial_no, token);
-                printf("serial_no: %s  ", serial_no);
-                int sn_no = atoi(serial);
-                printf("sn_no: %d\n", sn_no);
+            if(time_dif <= 0) {
+                printf("File already Syncronized.\n");
+                continue;
             }
-			
-			
-			
-			
-			
-			}
-        }
+            printf("File Modified. Need to be Syncronized.\n");
+            
+            char coin[20];
+            char table[20];
+            unsigned char c_id[10];
 
-        // if it is a directory
-        if(dir -> d_type == DT_DIR && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
+            char *token;
+            token = strtok(sub_path, "/");
+            strcpy(coin, token);
+
+            token = strtok(NULL, "/");
+            strcpy(table, token);
+
+            token = strtok(coin, "_");
+            token = strtok(NULL,"_");
+            strcpy(c_id, token);
+            coin_id = atoi(c_id);
+            serial_no = atoi(df_name);
+
+            if(strcmp(table, "ANs") == 0) {
+                table_id = 0;
+            }
+            else if(strcmp(table, "Owners") == 0) {
+                table_id = 1;
+            }
+            else if(strcmp(table, "Statements") == 0) {
+                table_id = 2;
+            }
+            else if(strcmp(table, "Loss_Coin_Report") == 0) {
+                table_id = 3;
+            }
+            else if(strcmp(table, "Email_Recover") == 0) {
+                table_id = 4;
+            }
+        
+            printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+
+			index = prepare_resp_body(index);
+        }	
+			
+        if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-            printf("directory: %s ", dir->d_name);
-            char d_path[500]; 
-            sprintf(d_path, "%s/%s", path, dir->d_name);
-            printf("  dirpath: %s\n", d_path);
-            show_dir_content(d_path); // recall with the new path
+            printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
+            get_ModifiedFiles(df_path); 
         }
     }
     closedir(d);
 }
 
 
-void  CheckChanges() {
+void  execute_Report_Changes(unsigned int packet_len) {
 
 	int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + TIMESTAMP_BYTES_CNT;
 	int req_header_min;
@@ -276,7 +358,9 @@ void  CheckChanges() {
 	}
 
 	char *root_path = "/opt/Testing/Data";
-	show_dir_content(root_path);
+	get_ModifiedFiles(root_path);
+
+	prepare_udp_resp_body();
 
 
 }
