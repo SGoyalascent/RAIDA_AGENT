@@ -248,13 +248,12 @@ void prepare_resp_header(unsigned char status_code){
 //  Validate request header
 //-----------------------------------------------------------
 unsigned char validate_request_header(unsigned char * buff,int packet_size){
-	uint16_t frames_expected,i=0,request_header_exp_len= REQ_HEAD_MIN_LEN, coin_id=0;
+	uint16_t frames_expected,request_header_exp_len= REQ_HEAD_MIN_LEN;
 	printf("---------------Validate Req Header-----------------\n");
 	
 	if(buff[REQ_EN]!=0 && buff[REQ_EN]!=1){
 		return INVALID_EN_CODE;
 	}
-	request_header_exp_len = REQ_HEAD_MIN_LEN;
 	if(packet_size< request_header_exp_len){
 		printf("Invalid request header  \n");
 		return INVALID_PACKET_LEN;

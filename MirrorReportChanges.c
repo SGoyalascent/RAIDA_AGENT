@@ -27,7 +27,82 @@ union respbody bytes;
 //-----------------------------------------------------------
 int init_udp_socket(){}
 
-void ListenRequest_PrimaryAgent() {}
+void ListenRequest_PrimaryAgent() {
+	unsigned char *buffer,state=STATE_WAIT_START,status_code;
+	uint16_t frames_expected=0,curr_frame_no=0,n=0,i,index=0;
+	uint32_t	 client_s_addr=0; 	
+	socklen_t len=sizeof(struct sockaddr_in);
+	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
+	while(1){
+		//printf("state: %d", state);
+		switch(state){
+			case STATE_WAIT_START:
+				printf("---------------------WAITING FOR REQ HEADER ----------------------\n");
+				index=0;
+				curr_frame_no=0;
+				client_s_addr = 0;	
+				memset(buffer,0,server_config_obj.bytes_per_frame);
+				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &cliaddr,&len);
+				printf("n: %d\n", n);
+				curr_frame_no=1;
+				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+				state = STATE_START_RECVD;	
+			break;		
+			case STATE_START_RECVD:
+				printf("---------------------REQ HEADER RECEIVED ----------------------------\n");
+				 status_code=validate_request_header(buffer,n);
+				if(status_code!=NO_ERR_CODE){
+					send_err_resp_header(status_code);			
+					state = STATE_WAIT_START;
+				}else{
+					frames_expected = buffer[REQ_FC+1];
+					frames_expected|=(((uint16_t)buffer[REQ_FC])<<8);
+					printf("frames_expected: %d\n", frames_expected);
+					memcpy(udp_buffer,buffer,n);
+					index = n;
+					client_s_addr = cliaddr.sin_addr.s_addr;
+					if(frames_expected == 1){
+						state = STATE_END_RECVD;
+					}else{
+						state = STATE_WAIT_END;
+					}
+				}
+			break;
+			case STATE_WAIT_END:
+				set_time_out(FRAME_TIME_OUT_SECS);
+				if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
+					send_err_resp_header(FRAME_TIME_OUT);
+					state = STATE_WAIT_START;
+					printf("Time out error \n");
+				}else{
+					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &cliaddr,&len);
+					if(client_s_addr==cliaddr.sin_addr.s_addr){
+						memcpy(&udp_buffer[index],buffer,n);
+						index+=n;
+						curr_frame_no++;
+						printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+						if(curr_frame_no==frames_expected){
+							state = STATE_END_RECVD;
+						}
+					}						
+				}	
+			break;			
+			case STATE_END_RECVD:
+					decrypt_request_body(n);
+					//print_udp_buffer(n);
+					if(udp_buffer[index-1]!=REQ_END|| udp_buffer[index-2]!=REQ_END){
+						send_err_resp_header(INVALID_END_OF_REQ);
+						printf("--Invalid end of packet  \n");
+					}else{
+						printf("---------------------END RECVD----------------------------------------------\n");
+						printf("---------------------PROCESSING REQUEST-----------------------------\n");
+						process_request(index);
+					}
+					state = STATE_WAIT_START;
+			break;
+		}
+	}
+}
 
 //-----------------------------------------------------------
 //  Validate request header
@@ -130,7 +205,7 @@ void prepare_mirror_resp_header(unsigned char status_code){
 		ex_time= time_stamp_after-time_stamp_before;
 	}
 
-    bytes.val = frame_count;
+    bytes.val = frame_no;
 
 	udp_response[RES_RI] = server_config_obj.raida_id;
 	udp_response[RES_SH] = 0;
@@ -269,9 +344,9 @@ void get_ModifiedFiles(char * path)
             }
             printf("File Modified. Need to be Syncronized.\n");
             
-            char coin[20];
-            char table[20];
-            unsigned char c_id[10];
+            char coin[20];  //coin_1234
+            char table[20];  //Statements
+            unsigned char c_id[10];  //1234 from coin[]
 
             char *token;
             token = strtok(sub_path, "/");
@@ -284,7 +359,7 @@ void get_ModifiedFiles(char * path)
             token = strtok(NULL,"_");
             strcpy(c_id, token);
             coin_id = atoi(c_id);
-            serial_no = atoi(df_name);
+            serial_no = atoi(df_name);   //12345.bin file -->  12345
 
             if(strcmp(table, "ANs") == 0) {
                 table_id = 0;
@@ -321,8 +396,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 
 	int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + TIMESTAMP_BYTES_CNT;
 	int req_header_min;
-	unsigned int index=0,size=0;
-	unsigned char status_code;
+	unsigned int index=0;
 	unsigned char recv_buffer[TIMESTAMP_BYTES_CNT];
 
 	if(validate_request_body_general(packet_len,req_body_bytes,&req_header_min)==0){
