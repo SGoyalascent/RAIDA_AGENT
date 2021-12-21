@@ -47,20 +47,24 @@ int main() {
             i++;
 
             char *token;
+            char *token1;
             token = strtok(f_name, ".");
             while(token != NULL) {
 
                 printf("%s ", token);
+                strcpy(token1, token);
                 token = strtok(NULL, ".");
             }
             printf("\n");
+            printf("token: %s token1: %s\n", token, token1);
 
-            if(token == "config") {
+            if(token1 == "config") {
                 token = strtok(f_name, ".");
                 token = strtok(NULL, ".");
                 strcpy(Agent_Mode, token);
+                printf("Mode: %s ", Agent_Mode);
             }
-            else if(token == "ip") {
+            else if(token1 == "ip") {
                 token = strtok(f_name, ".");
                 if(token == "primary") {
                     token = strtok(NULL, ":");
