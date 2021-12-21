@@ -18,8 +18,8 @@
 
 int main() {
 
-    char file_name[5][50];
-    char path[500] = "/opt/raida";
+    char file_name[6][50];
+    char path[500] = "/opt/Testing";
     struct dirent *dir; 
     int path_len = strlen(path);
     DIR *d = opendir(path); 
