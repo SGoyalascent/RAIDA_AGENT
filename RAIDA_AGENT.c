@@ -28,7 +28,7 @@ int main() {
     struct dirent *dir; 
     DIR *d = opendir(path); 
     if(d == NULL) {
-        pritnf("Error\n");  
+        printf("Error\n");  
     }
     int i=0;
     while ((dir = readdir(d)) != NULL) 
@@ -58,29 +58,30 @@ int main() {
             printf("\n");
             printf("token1: %s\n", token1);
 
-            if(strcmp(token1, "config") == 0) {
+            int stat;
+            if((stat = strcmp(token1, "config")) == 0) {
                 token = strtok(f_name, ".");
                 token = strtok(NULL, ".");
                 strcpy(Agent_Mode, token);
                 printf("Mode: %s ", Agent_Mode);
             }
-            else if(strcmp(token1, "ip") == 0) {
+            else if((stat = strcmp(token1, "ip")) == 0) {
                 token = strtok(f_name, ".");
-                if(strcmp(token, "primary") == 0) {
+                if((stat = strcmp(token, "primary")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Primary, token);
                     token = strtok(NULL, ".");
                     port_primary = atoi(token);
                     printf("PRIMARY.  Ip_address: %s Port: %d\n", ip_address_Primary, port_primary);
                 }
-                else if(strcmp(token, "mirror") == 0) {
+                else if((stat = strcmp(token, "mirror")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Mirror, token);
                     token = strtok(NULL, ".");
                     port_mirror = atoi(token);
                     printf("MIRROR.  Ip_address: %s Port: %d\n", ip_address_Mirror, port_mirror);
                 }
-                else if(strcmp(token, "witness") == 0) {
+                else if((stat = strcmp(token, "witness")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Witness, token);
                     token = strtok(NULL, ".");
