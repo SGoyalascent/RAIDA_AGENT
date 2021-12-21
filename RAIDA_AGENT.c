@@ -64,20 +64,13 @@ int main() {
             int stat;
             if((stat = strcmp(token1, "config")) == 0) {
                 
-                printf("f_name: %s\n", f_name);
-                //char *token;
-                printf("ckeck1\n");
                 token = strtok(name, ".");
-                printf("Check2  token: %s\n", token);
                 token = strtok(NULL, ".");
-                printf("Check3  token: %s\n", token);
                 strcpy(Agent_Mode, token);
-                 printf("Check34\n");
                 printf("Mode: %s ", Agent_Mode);
             }
-            /*
             else if((stat = strcmp(token1, "ip")) == 0) {
-                token = strtok(f_name, ".");
+                token = strtok(name, ".");
                 if((stat = strcmp(token, "primary")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Primary, token);
