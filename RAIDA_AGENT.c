@@ -48,7 +48,9 @@ int main() {
 
             char *token;
             char *token1;
-            token = strtok(f_name, ".");
+            char name[50];
+            strcpy(name, dir->d_name);
+            token = strtok(name, ".");
             while(token != NULL) {
 
                 printf("%s ", token);
@@ -58,13 +60,22 @@ int main() {
             printf("\n");
             printf("token1: %s\n", token1);
 
+            strcpy(name, dir->d_name);
             int stat;
             if((stat = strcmp(token1, "config")) == 0) {
-                token = strtok(f_name, ".");
+                
+                printf("f_name: %s\n", f_name);
+                //char *token;
+                printf("ckeck1\n");
+                token = strtok(name, ".");
+                printf("Check2  token: %s\n", token);
                 token = strtok(NULL, ".");
+                printf("Check3  token: %s\n", token);
                 strcpy(Agent_Mode, token);
+                 printf("Check34\n");
                 printf("Mode: %s ", Agent_Mode);
             }
+            /*
             else if((stat = strcmp(token1, "ip")) == 0) {
                 token = strtok(f_name, ".");
                 if((stat = strcmp(token, "primary")) == 0) {
@@ -88,7 +99,7 @@ int main() {
                     port_witness = atoi(token);
                     printf("WITNESS.  Ip_address: %s Port: %d\n", ip_address_Witness, port_witness);
                 }
-            }
+            } */
 
         }	
 			
