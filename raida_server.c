@@ -60,15 +60,13 @@ int load_server_config() {
 		printf("Configuration parameters missing in server.bin \n");
 		return 1;
 	}
-	/*
+	
 	server_config_obj.port_number = buff[1];
 	server_config_obj.port_number|= (((uint16_t)buff[0])<<8);
-	//server_config_obj.port_number = 18000;
 	
 	server_config_obj.bytes_per_frame = buff[3];
 	server_config_obj.bytes_per_frame |= (((uint16_t)buff[2])<<8);
-	//server_config_obj.bytes_per_frame = 1024;
-	*/
+	
 
 	binary.byte[0] = buff[0];
     binary.byte[1] = buff[1];

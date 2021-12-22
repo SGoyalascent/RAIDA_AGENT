@@ -13,16 +13,15 @@
 #include <errno.h>
 #include <stdint.h>
 
-
+char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
+unsigned int port_primary, port_mirror, port_witness;
 
 
 void Read_Agent_Configuration_Files() {
 
     char path[50] = "/opt/Testing/";
     char Agent_Mode[10];
-    char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
-    unsigned int port_primary, port_mirror, port_witness;
-
+    
     struct dirent *dir; 
     DIR *d = opendir(path); 
     if(d == NULL) {
