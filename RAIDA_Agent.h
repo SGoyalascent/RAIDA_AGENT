@@ -241,15 +241,6 @@ struct timestamp {
 extern struct timestamp tm;
 extern struct timestamp recv_tm;
 
-extern int sockfd;
-extern unsigned char response_flg;
-extern int32_t key_cnt;
-extern fd_set select_fds;                
-extern struct timeval timeout;
-extern struct sockaddr_in servaddr, cliaddr;
-extern long time_stamp_before,time_stamp_after;
-extern unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
-
 extern unsigned char udp_response[MAXLINE];
 extern time_t t1;
 extern unsigned int coin_id;
@@ -280,6 +271,48 @@ union respbody {
 };
 
 extern union respbody bytes;
+
+//------Raida_Agent----------------
+
+extern char execpath[256], Agent_Mode[10];
+extern char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
+extern unsigned int port_primary, port_mirror, port_witness;
+
+struct agent_config {
+
+    char Agent_Mode[10];
+    char ip_address_Primary[20]; 
+    char ip_address_Mirror[20]; 
+    char ip_address_Witness[20];
+    unsigned int port_primary;
+    unsigned int port_mirror;
+    unsigned int port_witness;
+};
+
+extern struct agent_config agent_config_obj;
+
+
+
+//-------------------
+extern int sockfd;
+extern unsigned char response_flg;
+extern int32_t key_cnt;
+extern fd_set select_fds;                
+extern struct timeval timeout;
+extern struct sockaddr_in servaddr, cliaddr;
+extern long time_stamp_before,time_stamp_after;
+extern unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
+
+extern unsigned char udp_response[MAXLINE];
+extern time_t t1;
+extern unsigned int coin_id;
+extern unsigned int table_id;
+extern unsigned int serial_no;
+extern unsigned int index = RES_HS+HS_BYTES_CNT;
+extern unsigned int index_resp = 0;
+extern unsigned int frame_count = 0;
+extern unsigned int frame_no = 0;
+
 
 //------------------------------------------------------------------------
 int listen_request(); 

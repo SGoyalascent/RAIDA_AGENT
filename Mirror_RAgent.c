@@ -1,5 +1,19 @@
 #include "RAIDA_Agent.h"
 
+int sockfd;
+struct sockaddr_in servaddr, cliaddr;
+
+fd_set select_fds;               
+struct timeval timeout;
+union coversion snObj; 
+union serial_no sn_no;
+
+long time_stamp_before,time_stamp_after;
+unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX],coin_table_id[5],EN_CODES[EN_CODES_MAX]={0};
+unsigned char free_thread_running_flg;
+
+
+
 //-----------------------------------------------------------
 //Initialize UDP Socket and bind to the port
 //-----------------------------------------------------------
