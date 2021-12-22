@@ -7,8 +7,7 @@
 //-------------------
 
 char execpath[256];
-unsigned char send_buffer[MAXLINE];
-unsigned char recv_buffer[MAXLINE];
+unsigned char send_buffer[MAXLINE], recv_buffer[MAXLINE];
 
 struct timestamp tm;
 struct sockaddr_in servaddr, cliaddr;

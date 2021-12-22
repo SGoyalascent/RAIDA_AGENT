@@ -16,11 +16,9 @@
 
 
 
-int main() {
+void Read_Agent_Configuration_Files() {
 
-    char file_name[6][50];
     char path[50] = "/opt/Testing/";
-    int path_len = strlen(path);
     char Agent_Mode[10];
     char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
     unsigned int port_primary, port_mirror, port_witness;
@@ -35,16 +33,11 @@ int main() {
     {
         if(dir->d_type == DT_REG) {
             
-			char f_path[500];
-            char f_name[50];
+			char f_path[500], f_name[50];
             strcpy(f_name, dir->d_name);
             strcpy(f_path, path);
             strcat(f_path, f_name);
-            printf("filename: %s  filepath: %s ", f_name, f_path);
-
-            strcpy(file_name[i], f_name);
-            printf("file_name: %s\n", file_name[i]);
-            i++;
+            printf("filename: %s  filepath: %s\n", f_name, f_path);
 
             char *token;
             char *token1;
@@ -53,12 +46,9 @@ int main() {
             token = strtok(name, ".");
             while(token != NULL) {
 
-                printf("%s ", token);
                 strcpy(token1, token);
                 token = strtok(NULL, ".");
             }
-            printf("\n");
-            printf("token1: %s\n", token1);
 
             strcpy(name, dir->d_name);
             int stat;
@@ -67,7 +57,7 @@ int main() {
                 token = strtok(name, ".");
                 token = strtok(NULL, ".");
                 strcpy(Agent_Mode, token);
-                printf("Mode: %s ", Agent_Mode);
+                printf("Agent_Mode: %s ", Agent_Mode);
             }
             else if((stat = strcmp(token1, "ip")) == 0) {
                 token = strtok(name, ".");
@@ -76,23 +66,23 @@ int main() {
                     strcpy(ip_address_Primary, token);
                     token = strtok(NULL, ".");
                     port_primary = atoi(token);
-                    printf("PRIMARY.  Ip_address: %s Port: %d\n", ip_address_Primary, port_primary);
+                    printf("PRIMARY-RAIDA.  Ip_address: %s Port: %d\n", ip_address_Primary, port_primary);
                 }
                 else if((stat = strcmp(token, "mirror")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Mirror, token);
                     token = strtok(NULL, ".");
                     port_mirror = atoi(token);
-                    printf("MIRROR.  Ip_address: %s Port: %d\n", ip_address_Mirror, port_mirror);
+                    printf("MIRROR-RAIDA.  Ip_address: %s Port: %d\n", ip_address_Mirror, port_mirror);
                 }
                 else if((stat = strcmp(token, "witness")) == 0) {
                     token = strtok(NULL, ":");
                     strcpy(ip_address_Witness, token);
                     token = strtok(NULL, ".");
                     port_witness = atoi(token);
-                    printf("WITNESS.  Ip_address: %s Port: %d\n", ip_address_Witness, port_witness);
+                    printf("WITNESS-RAIDA.  Ip_address: %s Port: %d\n", ip_address_Witness, port_witness);
                 }
-            } */
+            } 
 
         }	
 			
