@@ -7,7 +7,6 @@
 
 char execpath[256];
 char Agent_Mode[10];
-struct agent_config agent_config_obj;
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
 

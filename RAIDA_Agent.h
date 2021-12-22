@@ -278,25 +278,9 @@ extern char execpath[256];
 extern char Agent_Mode[10];
 
 struct agent_config {
-
-    char Agent_Mode[10];
-    char ip_address_Primary[20]; 
-    char ip_address_Mirror[20]; 
-    char ip_address_Witness[20];
-    unsigned int port_primary;
-    unsigned int port_mirror;
-    unsigned int port_witness;
-};
-
-extern struct agent_config agent_config_obj;
-
-struct agent_config {
-
-    
     char Ip_address[20];
     unsigned int port_number;
 };
-
 extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
 struct server_config {
@@ -304,6 +288,7 @@ struct server_config {
 	//unsigned int port_number;
 	unsigned int bytes_per_frame;
 };
+extern struct server_config server_config_obj;
 
 //-------------------
 extern int sockfd;

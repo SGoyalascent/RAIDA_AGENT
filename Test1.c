@@ -13,14 +13,21 @@
 #include <errno.h>
 #include <stdint.h>
 
+int main() 
+{
+    unsigned int i = 1;
+    char *c = (char*)&i;
+    if (*c)    
+        printf("Little endian");
+    else
+        printf("Big endian");
+    getchar();
 
-int main() {
 
-	char execpath[500] =  "/opt/Testing/";
-    char path[50];
-	char paths[50];
-    
-    strcpy(path, execpath);
-	strcat(paths, execpath);
-    printf("path: %s  paths: %s\n", path, paths);
+    unsigned char arr[2] = {0x01, 0x00};
+    unsigned short int x = *(unsigned short int *) arr;
+    printf("%d", x);
+    getchar();
+
+    return 0;
 }

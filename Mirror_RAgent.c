@@ -15,7 +15,15 @@ unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX],coin_table
 unsigned char free_thread_running_flg;
 
 
-
+//-----------------------------------------------------------
+//Set time out for UDP frames
+//-----------------------------------------------------------
+void set_time_out(unsigned char secs){     
+	FD_ZERO(&select_fds);            
+	FD_SET(sockfd, &select_fds);           	                                  
+	timeout.tv_sec = secs; 
+	timeout.tv_usec = 0;
+}
 //-----------------------------------------------------------
 //Initialize UDP Socket and bind to the port
 //-----------------------------------------------------------
@@ -29,24 +37,26 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));
 	memset(&cliaddr, 0, sizeof(cliaddr));
 
-	servaddr.sin_family = AF_INET; // IPv4
-    servaddr.sin_port = htons(agent_config_obj.port_primary);
+	servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(Primary_agent_config.port_number);
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_addr.s_addr = inet_addr(agent_config_obj.ip_address_Primary);
+
+	servaddr.sin_addr.s_addr = inet_addr(Primary_agent_config.Ip_address);
 
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
 }
+
 //-----------------------------------------------------------
 // receives the UDP packet from the client
 //-----------------------------------------------------------
 int listen_request(){
 	unsigned char *buffer,state=STATE_WAIT_START,status_code;
 	uint16_t frames_expected=0,curr_frame_no=0,n=0,i,index=0;
-	uint32_t	 client_s_addr=0; 	
-	socklen_t len=sizeof(struct sockaddr_in);
+	uint32_t client_s_addr=0; 	
+	socklen_t len = sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
 	while(1){
 		//printf("state: %d", state);
@@ -57,7 +67,7 @@ int listen_request(){
 				curr_frame_no=0;
 				client_s_addr = 0;	
 				memset(buffer,0,server_config_obj.bytes_per_frame);
-				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &cliaddr,&len);
+				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &cliaddr,&len);
 				printf("n: %d\n", n);
 				curr_frame_no=1;
 				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
@@ -65,8 +75,8 @@ int listen_request(){
 			break;		
 			case STATE_START_RECVD:
 				printf("---------------------REQ HEADER RECEIVED ----------------------------\n");
-				 status_code=validate_request_header(buffer,n);
-				if(status_code!=NO_ERR_CODE){
+				 status_code = validate_request_header(buffer,n);
+				if(status_code != NO_ERR_CODE){
 					send_err_resp_header(status_code);			
 					state = STATE_WAIT_START;
 				}else{
