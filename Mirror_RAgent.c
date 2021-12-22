@@ -2,6 +2,8 @@
 
 int sockfd;
 struct sockaddr_in servaddr, cliaddr;
+struct agent_config agent_config_obj;
+struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
 fd_set select_fds;               
 struct timeval timeout;
@@ -18,7 +20,7 @@ unsigned char free_thread_running_flg;
 //Initialize UDP Socket and bind to the port
 //-----------------------------------------------------------
 int init_udp_socket() {
-	// Creating socket file descriptor
+	
 	printf("init_udp_socket\n");
 	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
 		perror("socket creation failed");
@@ -26,11 +28,12 @@ int init_udp_socket() {
 	}
 	memset(&servaddr, 0, sizeof(servaddr));
 	memset(&cliaddr, 0, sizeof(cliaddr));
-	// Filling server information
+
 	servaddr.sin_family = AF_INET; // IPv4
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(server_config_obj.port_number);
-	// Bind the socket with the server address
+    servaddr.sin_port = htons(agent_config_obj.port_primary);
+	//servaddr.sin_addr.s_addr = INADDR_ANY;
+	servaddr.sin_addr.s_addr = inet_addr(agent_config_obj.ip_address_Primary);
+
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);

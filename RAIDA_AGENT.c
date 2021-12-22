@@ -6,7 +6,9 @@
 
 
 char execpath[256];
+char Agent_Mode[10];
 struct agent_config agent_config_obj;
+struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
 
 void get_execpath() {
@@ -57,31 +59,31 @@ void Read_Agent_Configuration_Files() {
                 
                 token = strtok(name, ".");
                 token = strtok(NULL, ".");
-                strcpy(agent_config_obj.Agent_Mode, token);
-                printf("Agent_Mode: %s ", agent_config_obj.Agent_Mode);
+                strcpy(Agent_Mode, token);
+                printf("Agent_Mode: %s ", Agent_Mode);
             }
             else if((stat = strcmp(token1, "ip")) == 0) {
                 token = strtok(name, ".");
                 if((stat = strcmp(token, "primary")) == 0) {
                     token = strtok(NULL, ":");
-                    strcpy(agent_config_obj.ip_address_Primary, token);
+                    strcpy(Primary_agent_config.Ip_address, token);
                     token = strtok(NULL, ".");
-                    agent_config_obj.port_primary = atoi(token);
-                    printf("PRIMARY-RAIDA.  Ip_address: %s Port: %d\n", agent_config_obj.ip_address_Primary, agent_config_obj.port_primary);
+                    Primary_agent_config.port_number = atoi(token);
+                    printf("PRIMARY-RAIDA.  Ip_address: %s Port: %d\n", Primary_agent_config.Ip_address, Primary_agent_config.port_number);
                 }
                 else if((stat = strcmp(token, "mirror")) == 0) {
                     token = strtok(NULL, ":");
-                    strcpy(agent_config_obj.ip_address_Mirror, token);
+                    strcpy(Mirror_agent_config.Ip_address, token);
                     token = strtok(NULL, ".");
-                    agent_config_obj.port_mirror = atoi(token);
-                    printf("MIRROR-RAIDA.  Ip_address: %s Port: %d\n", agent_config_obj.ip_address_Mirror, agent_config_obj.port_mirror);
+                    Mirror_agent_config.port_number = atoi(token);
+                    printf("MIRROR-RAIDA.  Ip_address: %s Port: %d\n", Mirror_agent_config.Ip_address, Mirror_agent_config.port_number);
                 }
                 else if((stat = strcmp(token, "witness")) == 0) {
                     token = strtok(NULL, ":");
-                    strcpy(agent_config_obj.ip_address_Witness, token);
+                    strcpy(Witness_agent_config.Ip_address, token);
                     token = strtok(NULL, ".");
-                    agent_config_obj.port_witness = atoi(token);
-                    printf("WITNESS-RAIDA.  Ip_address: %s Port: %d\n",agent_config_obj.ip_address_Witness, agent_config_obj.port_witness);
+                    Witness_agent_config.port_number = atoi(token);
+                    printf("WITNESS-RAIDA.  Ip_address: %s Port: %d\n", Witness_agent_config.Ip_address, Witness_agent_config.port_number);
                 }
             } 
 
@@ -107,13 +109,13 @@ int main() {
     Read_Keys();
 
     int stat;
-    if((stat = strcmp(agent_config_obj.Agent_Mode, "primary")) == 0) {
+    if((stat = strcmp(Agent_Mode, "primary")) == 0) {
 
     }
-    else if((stat = strcmp(agent_config_obj.Agent_Mode, "mirror"))) {
+    else if((stat = strcmp(Agent_Mode, "mirror"))) {
 
     }
-    else if((stat = strcmp(agent_config_obj.Agent_Mode, "witness"))) {
+    else if((stat = strcmp(Agent_Mode, "witness"))) {
 
     }
 

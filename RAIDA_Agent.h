@@ -274,9 +274,8 @@ extern union respbody bytes;
 
 //------Raida_Agent----------------
 
-extern char execpath[256], Agent_Mode[10];
-extern char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
-extern unsigned int port_primary, port_mirror, port_witness;
+extern char execpath[256];
+extern char Agent_Mode[10];
 
 struct agent_config {
 
@@ -291,7 +290,20 @@ struct agent_config {
 
 extern struct agent_config agent_config_obj;
 
+struct agent_config {
 
+    
+    char Ip_address[20];
+    unsigned int port_number;
+};
+
+extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+
+struct server_config {
+	unsigned char raida_id;
+	//unsigned int port_number;
+	unsigned int bytes_per_frame;
+};
 
 //-------------------
 extern int sockfd;
