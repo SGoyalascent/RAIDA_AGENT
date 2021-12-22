@@ -1,27 +1,29 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <inttypes.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <time.h>
-#include <dirent.h>
-#include <errno.h>
-#include <stdint.h>
+// When in Primary mode, Call the Mirror Report Changes service
+// Send request to the Mirror server, receive the response send from the mirror
+// Assume we are using Standard 22 bytes Header
 
+#include "RAIDA_Agent.h"
+
+
+char execpath[256] = "/opt/Testing/";
+unsigned char send_buffer[MAXLINE], recv_buffer[MAXLINE];
+
+char Agent_Mode[10];
 char ip_address_Primary[20], ip_address_Mirror[20], ip_address_Witness[20];
 unsigned int port_primary, port_mirror, port_witness;
 
+void WelcomeMsg() {
 
+    printf("\nWelcome to the RAIDA AGENT\n");
+}
+
+//--------------------------------------------------
+//READ CONFIG FILE, IP ADDRESS AND PORT
+//--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
-    char path[50] = "/opt/Testing/";
-    char Agent_Mode[10];
-    
+    char path[50];
+    strcpy(path, execpath);
     struct dirent *dir; 
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -88,3 +90,33 @@ void Read_Agent_Configuration_Files() {
     }
     closedir(d);
 }
+
+//-----------------------------------------------
+//READ KEYS.bin FILE
+//-----------------------------------------------
+
+void Read_Keys() {
+
+}
+
+int main() {
+
+    WelcomeMsg();
+    Read_Agent_Configuration_Files();
+    Read_Keys();
+
+    int stat;
+    if((stat = strcmp(Agent_Mode, "primary")) == 0) {
+
+    }
+    else if((stat = strcmp(Agent_Mode, "mirror"))) {
+
+    }
+    else if((stat = strcmp(Agent_Mode, "witness"))) {
+
+    }
+
+    return 0;
+
+}
+
