@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdint.h>
+#include <math.h>
 
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 

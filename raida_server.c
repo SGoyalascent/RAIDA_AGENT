@@ -93,9 +93,9 @@ long get_time_cs()
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
     s  = spec.tv_sec;
-    //ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to milliseconds
-    //cs = ms /100;	
-//    printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
+    ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to milliseconds
+    cs = ms /100;	
+	printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
     return ms;	
 }
 //---------------------------------------------------------

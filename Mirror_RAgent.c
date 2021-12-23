@@ -6,14 +6,16 @@ struct agent_config agent_config_obj;
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
 union conversion byteObj;
-
 fd_set select_fds;               
 struct timeval timeout;
+
+
 union coversion snObj; 
 union serial_no sn_no;
 
 long time_stamp_before,time_stamp_after;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX],coin_table_id[5],EN_CODES[EN_CODES_MAX]={0};
+
 unsigned char free_thread_running_flg;
 
 
@@ -40,10 +42,10 @@ int init_udp_socket() {
 	memset(&cliaddr, 0, sizeof(cliaddr));
 
 	servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(Primary_agent_config.port_number);
-	//servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(Mirror_agent_config.port_number);
+	servaddr.sin_addr.s_addr = INADDR_ANY;
 
-	servaddr.sin_addr.s_addr = inet_addr(Primary_agent_config.Ip_address);
+	//servaddr.sin_addr.s_addr = inet_addr(Primary_agent_config.Ip_address);
 
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
@@ -55,7 +57,7 @@ int init_udp_socket() {
 // receives the UDP packet from the client
 //-----------------------------------------------------------
 int listen_request(){
-	unsigned char *buffer,state=STATE_WAIT_START,status_code;
+	unsigned char *buffer,state = STATE_WAIT_START,status_code;
 	uint16_t frames_expected=0,curr_frame_no=0,n=0,i,index=0;
 	uint32_t client_s_addr=0; 	
 	socklen_t len = sizeof(struct sockaddr_in);
@@ -147,14 +149,71 @@ void process_request(unsigned int packet_len){
 		default:								send_err_resp_header(INVALID_CMD);	
 	}
 }
+//-----------------------------------------------------------
+//  Validate request header
+//-----------------------------------------------------------
+unsigned char validate_request_header(unsigned char * buff,int packet_size){
+	uint16_t frames_expected,request_header_exp_len= REQ_HEAD_MIN_LEN;
+	printf("---------------Validate Req Header-----------------\n");
+	
+	if(buff[REQ_EN]!=0 && buff[REQ_EN]!=1){
+		printf("Error: Invalid EN code\n");
+		return INVALID_EN_CODE;
+	}
+	if(packet_size < request_header_exp_len){
+		printf("Error: Invalid request header  \n");
+		return INVALID_PACKET_LEN;
+	}
+	frames_expected = buff[REQ_FC+1];
+	frames_expected|=(((uint16_t)buff[REQ_FC])<<8);
+	if(frames_expected <= 0  || frames_expected > FRAMES_MAX){
+		printf("Error: Invalid frame count  \n");
+		return INVALID_FRAME_CNT;
+	}	
+	if(buff[REQ_CL]!=0){
+		printf("Error: Invalid cloud id \n");
+		return INVALID_CLOUD_ID;
+	}
+	if(buff[REQ_SP]!=0){
+		printf("Error: Invalid split id \n");
+		return INVALID_SPLIT_ID;
+	}
+	if(buff[REQ_RI]!=server_config_obj.raida_id){
+		printf("Error: Invalid Raida id \n");
+		return WRONG_RAIDA;
+	}
+	return NO_ERR_CODE;
+}
+//------------------------------------------------------------------------------------------
+//  Validate coins and request body and return number of coins 
+//-----------------------------------------------------------------------------------------
+unsigned char validate_request_body_general(unsigned int packet_len,unsigned int req_body,int *req_header_min){
+	*req_header_min = REQ_HEAD_MIN_LEN;
+	if(packet_len != (*req_header_min) + req_body){
+		send_err_resp_header(INVALID_PACKET_LEN);
+		return 0;
+	}
+	return 1;
+}
+//---------------------------------------------------------------
+//	SEND RESPONSE
+//---------------------------------------------------------------
+void send_response(unsigned char status_code,unsigned int size){
+	int len=sizeof(cliaddr);
+	char * myfifo = "/tmp/myfifo";
+	prepare_resp_header(status_code);
+	sendto(sockfd, (const char *)response, size,
+		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
+		len);
+}
 
 //-----------------------------------------------------------
 // Prepare error response and send it.
 //-----------------------------------------------------------
 void send_err_resp_header(int status_code){
-	int len,size=12;
+	int len, size = RESP_BUFF_MIN_CNT;
 	unsigned char ex_time;
-	char * myfifo = "/tmp/myfifo";
+	char *myfifo = "/tmp/myfifo";
 	time_stamp_after = get_time_cs();
 	if((time_stamp_after-time_stamp_before) > 255){
 		ex_time = 255;
@@ -180,109 +239,4 @@ void send_err_resp_header(int status_code){
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
 		len);
 	
-}
-//-----------------------------------------------------------
-// Prepare response and send it.
-//-----------------------------------------------------------
-void prepare_resp_header(unsigned char status_code){
-	unsigned char ex_time;
-	time_stamp_after = get_time_cs();
-	if((time_stamp_after-time_stamp_before) > 255){
-		ex_time = 255;
-	}else{
-		ex_time= time_stamp_after-time_stamp_before;
-	}
-
-	response[RES_RI] = server_config_obj.raida_id;
-	response[RES_SH] = 0;
-	response[RES_SS] = status_code;
-	response[RES_EX] = ex_time;
-	response[RES_RE] = 0;
-	response[RES_RE+1] = 0;
-	response[RES_EC] = udp_buffer[REQ_EC];
-	response[RES_EC+1] = udp_buffer[REQ_EC+1];
-	response[RES_HS] = 0;
-	response[RES_HS+1] = 0;
-	response[RES_HS+2] = 0;
-	response[RES_HS+3] = 0;
-
-}
-//-----------------------------------------------------------
-//  Validate request header
-//-----------------------------------------------------------
-unsigned char validate_request_header(unsigned char * buff,int packet_size){
-	uint16_t frames_expected,request_header_exp_len= REQ_HEAD_MIN_LEN;
-	printf("---------------Validate Req Header-----------------\n");
-	
-	if(buff[REQ_EN]!=0 && buff[REQ_EN]!=1){
-		return INVALID_EN_CODE;
-	}
-	if(packet_size< request_header_exp_len){
-		printf("Invalid request header  \n");
-		return INVALID_PACKET_LEN;
-	}
-	frames_expected = buff[REQ_FC+1];
-	frames_expected|=(((uint16_t)buff[REQ_FC])<<8);
-	if(frames_expected <=0  || frames_expected > FRAMES_MAX){
-		printf("Invalid frame count  \n");
-		return INVALID_FRAME_CNT;
-	}	
-	if(buff[REQ_CL]!=0){
-		printf("Invalid cloud id \n");
-		return INVALID_CLOUD_ID;
-	}
-	if(buff[REQ_SP]!=0){
-		printf("Invalid split id \n");
-		return INVALID_SPLIT_ID;
-	}
-	if(buff[REQ_RI]!=server_config_obj.raida_id){
-		printf("Invalid Raida id \n");
-		return WRONG_RAIDA;
-	}
-	return NO_ERR_CODE;
-}
-//------------------------------------------------------------------------------------------
-//  Validate coins and request body and return number of coins 
-//-----------------------------------------------------------------------------------------
-unsigned char validate_request_body(unsigned int packet_len,unsigned char bytes_per_coin,unsigned int req_body_without_coins,int *req_header_min){
-	unsigned int no_of_coins=0;
-	*req_header_min = REQ_HEAD_MIN_LEN;
-	no_of_coins = (packet_len-(*req_header_min+req_body_without_coins))/bytes_per_coin;
-	printf("---------------Validate Request Body---------------------------\n");
-	if((packet_len-(*req_header_min+req_body_without_coins))%bytes_per_coin!=0){
-		send_err_resp_header(LEN_OF_BODY_CANT_DIV_IN_COINS);
-		return 0;
-	}
-	if(no_of_coins==0){
-		send_err_resp_header(LEN_OF_BODY_CANT_DIV_IN_COINS);
-		return 0;
-	}
-	if(no_of_coins>COINS_MAX){
-		send_err_resp_header(COIN_LIMIT_EXCEED);
-		return 0;
-	}
-	printf("Number of coins = :  %d \n", no_of_coins);	
-	return no_of_coins;
-}
-//------------------------------------------------------------------------------------------
-//  Validate coins and request body and return number of coins 
-//-----------------------------------------------------------------------------------------
-unsigned char validate_request_body_general(unsigned int packet_len,unsigned int req_body,int *req_header_min){
-	*req_header_min = REQ_HEAD_MIN_LEN;
-	if(packet_len != (*req_header_min) + req_body){
-		send_err_resp_header(INVALID_PACKET_LEN);
-		return 0;
-	}
-	return 1;
-}
-//---------------------------------------------------------------
-//	SEND RESPONSE
-//---------------------------------------------------------------
-void send_response(unsigned char status_code,unsigned int size){
-	int len=sizeof(cliaddr);
-	char * myfifo = "/tmp/myfifo";
-	prepare_resp_header(status_code);
-	sendto(sockfd, (const char *)response, size,
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-		len);
 }
