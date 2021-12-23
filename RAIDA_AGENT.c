@@ -11,6 +11,7 @@ struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_con
 
 
 void get_execpath() {
+    
     strcpy(execpath, "/opt/Testing/");
 }
 

@@ -206,8 +206,10 @@
 #define RAIDA_AGENT_TABLE_ID_BYTES_CNT          1
 #define RAIDA_AGENT_COIN_ID_BYTES_CNT           2
 #define RAIDA_AGENT_SN_NO_BYTES_CNT             4
-#define TIME_STAMP_BYTES_CNT		            6
+#define TIMESTAMP_BYTES_CNT		            6
 #define RAIDA_AGENT_FILE_ID_BYTES_CNT           7
+
+#define RESP_BODY_END_BYTES                  2
 
 #define AGENT_PRIMARY               1
 #define AGENT_MIRROR                2

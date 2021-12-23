@@ -5,18 +5,12 @@
 #include "RAIDA_Agent.h"
 
 struct sockaddr_in servaddr, cliaddr;
-int sockfd = 0;
-unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX];
-unsigned char udp_response[MAXLINE];
+int sockfd = 0, total_frames = 0;
+unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX], udp_response[MAXLINE];
 time_t t1;
-unsigned int coin_id;
-unsigned int table_id;
-unsigned int serial_no;
-unsigned int index = 0;
+unsigned int coin_id, table_id, serial_no;
 unsigned int resp_len = index_resp = RES_HS + HS_BYTES_CNT;
-unsigned int frame_count = 0;
-unsigned int frame_no = 0;
-unsigned int total_frames = 0;
+char execpath[256];
 
 union respbody bytes;
 
@@ -60,14 +54,15 @@ void prepare_udp_resp_body() {
     response[index_resp+0] = 0x3E;
     response[index_resp+1] = 0x3E;
 
-    unsigned int resp_length = index_resp + CMD_END_BYTES_CNT;
+    int resp_length = index_resp + RESP_BODY_END_BYTES;
     unsigned int current_length = resp_length;
+    printf("current_length: %u ", current_length);
 
     total_frames = (resp_length/MAXLINE) + 1;
     if((resp_length % MAXLINE) == 0) {
         total_frames = total_frames - 1;
     }
-    printf("resp_length: %d  total_frames: %d\n", resp_length, total_frames);
+    printf("resp_length: %d  current_length: %u total_frames: %d\n", resp_length, current_length, total_frames);
 
     int frames = 0;
     unsigned char status_code;
@@ -82,17 +77,18 @@ void prepare_udp_resp_body() {
 		return;
 	}
 
-    index = 0;
+    int index = 0;
     status_code = MIRROR_REPORT_RETURNED;
     prepare_resp_header(status_code);
     while(frames < total_frames) {
         
         frames++;
+        
         if(current_length <= MAXLINE) {
             memcpy(udp_response, &response[index], current_length);
             index += current_length;
             size = current_length;
-            Send_Response_PrimaryAgent(status_code, size);
+            Send_Response_PrimaryAgent(size);
         }
         else {
             memcpy(udp_response, &response[index], MAXLINE);
@@ -100,26 +96,33 @@ void prepare_udp_resp_body() {
             size = MAXLINE;
             current_length = current_length - MAXLINE;
             status_code = MIRROR_REPORT_RETURNED;
-            Send_Response_PrimaryAgent(status_code, size);
+            Send_Response_PrimaryAgent(size);
         }
+        printf("current_length: %u frames: %d ", current_length, frames);
     }
 }
 
-int prepare_resp_body(int index_resp) {
+int prepare_resp_body(int index) {
     
     bytes.val = coin_id;
-    response[index_resp+0] = bytes.byte_coin[1]; //MSB
-    response[index_resp+1] = bytes.byte_coin[0];  //LSB
+    response[index+0] = bytes.byte_coin[1]; //MSB
+    response[index+1] = bytes.byte_coin[0];  //LSB
     
-    response[index_resp+2] = table_id;
+    response[index+2] = table_id;
 
     bytes.val = serial_no;
-    response[index_resp+3] = bytes.byte_sn[3]; // msb
-    response[index_resp+4] = bytes.byte_sn[2];
-    response[index_resp+5] = bytes.byte_sn[1];
-    response[index_resp+6] = bytes.byte_sn[0]; // lsb
+    response[index+3] = bytes.byte_sn[3]; // msb
+    response[index+4] = bytes.byte_sn[2];
+    response[index+5] = bytes.byte_sn[1];
+    response[index+6] = bytes.byte_sn[0]; // lsb
     
-    return (index_resp+7);
+    return (index+7);
+}
+
+void get_Files_path() {
+
+
+    
 }
 
 void get_ModifiedFiles(char * path)
@@ -137,8 +140,7 @@ void get_ModifiedFiles(char * path)
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        char df_path[500];
-        char df_name[256];
+        char df_path[500], df_name[256];
         sprintf(df_name, "%s",dir->d_name);
         sprintf(df_path, "%s/%s", path, dir->d_name);
 
@@ -157,7 +159,7 @@ void get_ModifiedFiles(char * path)
                 continue;
             }
 
-            strcpy(sub_path, df_path+path_len+1);
+            strcpy(sub_path, &df_path[path_len+1]);
             printf("sub_path: %s\n", sub_path);
 
             if(strcmp(sub_path, df_name) == 0) {
@@ -167,7 +169,7 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
+            //printf("datestring: %s\n", datestring);
             printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
                                                                                 dt->tm_hour,dt->tm_min, dt->tm_sec );
         
@@ -214,7 +216,7 @@ void get_ModifiedFiles(char * path)
         
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 
-			index = prepare_resp_body(index);
+			index_resp = prepare_resp_body(index_resp);
         }	
 			
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
@@ -241,7 +243,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 
 	index = req_header_min + CH_BYTES_CNT;
 	printf("recv_buffer: ");
-	for(int i=0; i < TIME_STAMP_BYTES_CNT;i++) {
+	for(int i=0; i < TIMESTAMP_BYTES_CNT;i++) {
 
 		recv_buffer[i] = udp_buffer[index+i];
 		printf("%d ", recv_buffer[i]);
