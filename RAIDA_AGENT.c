@@ -108,9 +108,11 @@ int main() {
     Read_Agent_Configuration_Files();
     Read_Keys();
 
+    //Inspect the data files and find the day and time of the latest changes
+
     int stat;
     if((stat = strcmp(Agent_Mode, "primary")) == 0) {
-
+        //
     }
     else if((stat = strcmp(Agent_Mode, "mirror"))) {
 

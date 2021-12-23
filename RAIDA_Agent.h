@@ -258,26 +258,6 @@ extern unsigned int index_resp = 0;
 extern unsigned int frame_count = 0;
 extern unsigned int frame_no = 0;
 
-union coversion{
-	uint32_t val32;
-	unsigned char data[4];
-};
-extern union coversion snObj;
-
-union serial_no {
-	uint32_t val;
-	unsigned char buffer[3];
-};
-extern union serial_no sn_no;
-
-union respbody {
-
-    unsigned int val;
-    unsigned char byte_coin[2];
-    unsigned char byte_sn[4];
-};
-
-extern union respbody bytes;
 
 //------Raida_Agent----------------
 
@@ -299,6 +279,7 @@ extern struct server_config server_config_obj;
 
 union conversion {
 	uint32_t val32;
+    unsigned int val;
     unsigned char byte2[2];
 	unsigned char byte4[4];
 };
