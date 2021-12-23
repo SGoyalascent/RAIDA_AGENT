@@ -5,16 +5,12 @@
 #include "RAIDA_Agent.h"
 
 struct sockaddr_in servaddr, cliaddr;
-int sockfd = 0, total_frames = 0;
-unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX], udp_response[MAXLINE];
+int sockfd = 0, total_frames = 0, root_path_len = 0;
 time_t t1;
+unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX], udp_response[MAXLINE];
 unsigned int coin_id, table_id, serial_no;
-unsigned int resp_len = index_resp = RES_HS + HS_BYTES_CNT;
+unsigned int index_resp = RES_HS + HS_BYTES_CNT;
 char execpath[256];
-
-union respbody bytes;
-
-
 
 
 void prepare_resp_header(unsigned char status_code){
@@ -51,6 +47,19 @@ void Send_Response_toPrimaryAgent(unsigned int size){
 
 void prepare_udp_resp_body() {
 
+    unsigned char status_code;
+    unsigned int size = 0;
+    
+    if(index_resp == RESP_BUFF_MIN_CNT) {
+		status_code = RAIDA_AGENT_NO_CHANGES;
+        total_frames = 0;
+        prepare_resp_header(status_code);
+        memcpy(udp_response, response, index_resp);
+		size = RES_HS + HS_BYTES_CNT;
+		Send_Response_toPrimaryAgent(size);
+		return;
+	}
+    
     response[index_resp+0] = 0x3E;
     response[index_resp+1] = 0x3E;
 
@@ -64,20 +73,7 @@ void prepare_udp_resp_body() {
     }
     printf("resp_length: %d  current_length: %u total_frames: %d\n", resp_length, current_length, total_frames);
 
-    int frames = 0;
-    unsigned char status_code;
-    unsigned int size = 0;
-
-	if(resp_length == RESP_BUFF_MIN_CNT) {
-		status_code = RAIDA_AGENT_NO_CHANGES;
-        prepare_resp_header(status_code);
-        memcpy(udp_response, response, resp_length);
-		size = RES_HS + HS_BYTES_CNT;
-		Send_Response_PrimaryAgent(size);
-		return;
-	}
-
-    int index = 0;
+    int frames = 0, index = 0;
     status_code = MIRROR_REPORT_RETURNED;
     prepare_resp_header(status_code);
     while(frames < total_frames) {
@@ -88,15 +84,14 @@ void prepare_udp_resp_body() {
             memcpy(udp_response, &response[index], current_length);
             index += current_length;
             size = current_length;
-            Send_Response_PrimaryAgent(size);
+            Send_Response_toPrimaryAgent(size);
         }
         else {
             memcpy(udp_response, &response[index], MAXLINE);
             index += MAXLINE;
             size = MAXLINE;
             current_length = current_length - MAXLINE;
-            status_code = MIRROR_REPORT_RETURNED;
-            Send_Response_PrimaryAgent(size);
+            Send_Response_toPrimaryAgent(size);
         }
         printf("current_length: %u frames: %d ", current_length, frames);
     }
@@ -104,17 +99,17 @@ void prepare_udp_resp_body() {
 
 int prepare_resp_body(int index) {
     
-    bytes.val = coin_id;
-    response[index+0] = bytes.byte_coin[1]; //MSB
-    response[index+1] = bytes.byte_coin[0];  //LSB
+    byteObj.val32 = coin_id;
+    response[index+0] = byteObj.byte2[1]; //MSB
+    response[index+1] = byteObj.byte2[0];  //LSB
     
     response[index+2] = table_id;
 
-    bytes.val = serial_no;
-    response[index+3] = bytes.byte_sn[3]; // msb
-    response[index+4] = bytes.byte_sn[2];
-    response[index+5] = bytes.byte_sn[1];
-    response[index+6] = bytes.byte_sn[0]; // lsb
+    byteObj.val32 = serial_no;
+    response[index+3] = byteObj.byte4[3]; // msb
+    response[index+4] = byteObj.byte4[2];
+    response[index+5] = byteObj.byte4[1];
+    response[index+6] = byteObj.byte4[0]; // lsb
     
     return (index+7);
 }
@@ -122,7 +117,7 @@ int prepare_resp_body(int index) {
 void get_Files_path() {
 
 
-    
+
 }
 
 void get_ModifiedFiles(char * path)
@@ -131,8 +126,8 @@ void get_ModifiedFiles(char * path)
     struct stat statbuf;
     struct tm *dt;
     
-	char root_path[256] = "/opt/Testing/Data";
-    int path_len = strlen(root_path);
+	//char root_path[256] = "/opt/Testing/Data";
+    //root_path_len = strlen(root_path);
 
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -148,7 +143,6 @@ void get_ModifiedFiles(char * path)
             
 			printf("filename: %s  filepath: %s\n", df_name, df_path);
 
-            //Compare timestamps
             time_t t2;
             char datestring[256];
             double time_dif;
@@ -159,7 +153,7 @@ void get_ModifiedFiles(char * path)
                 continue;
             }
 
-            strcpy(sub_path, &df_path[path_len+1]);
+            strcpy(sub_path, &df_path[root_path_len+1]);
             printf("sub_path: %s\n", sub_path);
 
             if(strcmp(sub_path, df_name) == 0) {
@@ -251,9 +245,9 @@ void  execute_Report_Changes(unsigned int packet_len) {
 
 	struct tm *recv_dt = malloc(sizeof(struct tm));
 
-	recv_dt->tm_mday = recv_buffer[0];
-	recv_dt->tm_mon = recv_buffer[1];
-	recv_dt->tm_year = recv_buffer[2];
+	recv_dt->tm_year = recv_buffer[0];
+    recv_dt->tm_mon = recv_buffer[1];
+    recv_dt->tm_mday = recv_buffer[2];
 	recv_dt->tm_hour = recv_buffer[3];
 	recv_dt->tm_min = recv_buffer[4];
 	recv_dt->tm_sec = recv_buffer[5];
@@ -269,6 +263,8 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	}
 
 	char *root_path = "/opt/Testing/Data";
+    root_path_len = strlen(root_path);
+
 	get_ModifiedFiles(root_path);
 
 	prepare_udp_resp_body();

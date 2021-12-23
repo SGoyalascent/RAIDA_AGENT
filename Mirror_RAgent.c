@@ -8,14 +8,10 @@ struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_con
 union conversion byteObj;
 fd_set select_fds;               
 struct timeval timeout;
-
-
-union coversion snObj; 
-union serial_no sn_no;
+char execpath[256];
 
 long time_stamp_before,time_stamp_after;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX],coin_table_id[5],EN_CODES[EN_CODES_MAX]={0};
-
 unsigned char free_thread_running_flg;
 
 

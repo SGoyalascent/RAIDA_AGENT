@@ -281,9 +281,6 @@ extern union respbody bytes;
 
 //------Raida_Agent----------------
 
-// 0x17(End of Transmission block) \n 0x17
-//0x3E \0 0x3E
-
 extern char execpath[256];
 extern char Agent_Mode[10];
 
