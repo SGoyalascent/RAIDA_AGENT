@@ -12,38 +12,16 @@ time_t t1;
 unsigned int coin_id;
 unsigned int table_id;
 unsigned int serial_no;
-unsigned int index = RES_HS + HS_BYTES_CNT;
+unsigned int index = 0;
 unsigned int resp_len = index_resp = RES_HS + HS_BYTES_CNT;
 unsigned int frame_count = 0;
 unsigned int frame_no = 0;
+unsigned int total_frames = 0;
 
 union respbody bytes;
 
 
 
-
-void Receive_response_Report_Changes_Mirror() {
-    int n;
-    n = recvfrom(sockfd, (char *)recv_buffer, MAXLINE, 
-	                MSG_WAITALL, (struct sockaddr *) &servaddr,
-	                &len);
-	printf("n: %d\n", n);
-
-    for(i=0;i<n;i++){	
-        printf("%d,", recv_buffer[i]);
-    }
-    printf("\n");
-
-}
-
-void Send_Response_toPrimaryAgent(unsigned char status_code,unsigned int size){
-	int len=sizeof(cliaddr);
-	char * myfifo = "/tmp/myfifo";
-	prepare_resp_header(status_code);
-	sendto(sockfd, (const char *)response, size,
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-		len);
-}
 
 void prepare_resp_header(unsigned char status_code){
 	unsigned char ex_time;
@@ -54,66 +32,77 @@ void prepare_resp_header(unsigned char status_code){
 		ex_time= time_stamp_after-time_stamp_before;
 	}
 
-	response[RES_RI] = udp_response[RES_RI] = server_config_obj.raida_id;
-	response[RES_SH] = udp_response[RES_SH] = 0;
-	response[RES_SS] = udp_response[RES_SS] = status_code;
-	response[RES_EX] = udp_response[RES_EX] = ex_time;
-	response[RES_RE] = udp_response[RES_RE] = 0;        
-	response[RES_RE+1] = udp_response[RES_RE+1] = 0;    //frame count
-	response[RES_EC] = udp_response[RES_EC] = udp_buffer[REQ_EC];
-	response[RES_EC+1] = udp_response[RES_EC+1] = udp_buffer[REQ_EC+1];
-	response[RES_HS] = udp_response[RES_HS] = 0;
-	response[RES_HS+1] = udp_response[RES_HS+1] = 0;
-	response[RES_HS+2] = udp_response[RES_HS+2] = 0;
-	response[RES_HS+3] = udp_response[RES_HS+3] = 0;
-
+	response[RES_RI] = server_config_obj.raida_id;
+	response[RES_SH] = 0;
+	response[RES_SS] = status_code;
+	response[RES_EX] = ex_time;
+	response[RES_RE] = 0;        
+	response[RES_RE+1] = total_frames;    //frame count
+	response[RES_EC] = udp_buffer[REQ_EC];
+	response[RES_EC+1] = udp_buffer[REQ_EC+1];
+	response[RES_HS] = 0;
+	response[RES_HS+1] = 0;
+	response[RES_HS+2] = 0;
+	response[RES_HS+3] = 0;
+ 
 }   
+
+void Send_Response_toPrimaryAgent(unsigned int size){
+	int len = sizeof(cliaddr);
+	char * myfifo = "/tmp/myfifo";
+	//prepare_resp_header(status_code);
+	sendto(sockfd, (const char *)udp_response, size,
+		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);
+}
 
 void prepare_udp_resp_body() {
 
-    int resp_length = index_resp;
-	
-    int current_length = resp_length;
-    int total_frames = (resp_length/(MAXLINE-3-index)) + 1;
-    int frames = total_frames;
-    unsigned char status_code = MIRROR_REPORT_RETURNED;
-    int i =0;
+    response[index_resp+0] = 0x3E;
+    response[index_resp+1] = 0x3E;
+
+    unsigned int resp_length = index_resp + CMD_END_BYTES_CNT;
+    unsigned int current_length = resp_length;
+
+    total_frames = (resp_length/MAXLINE) + 1;
+    if((resp_length % MAXLINE) == 0) {
+        total_frames = total_frames - 1;
+    }
+    printf("resp_length: %d  total_frames: %d\n", resp_length, total_frames);
+
+    int frames = 0;
+    unsigned char status_code;
     unsigned int size = 0;
 
-	if(resp_length == 0) {
+	if(resp_length == RESP_BUFF_MIN_CNT) {
 		status_code = RAIDA_AGENT_NO_CHANGES;
-		size = RES_HS+HS_BYTES_CNT;
-		Send_Response_PrimaryAgent(status_code, size);
+        prepare_resp_header(status_code);
+        memcpy(udp_response, response, resp_length);
+		size = RES_HS + HS_BYTES_CNT;
+		Send_Response_PrimaryAgent(size);
 		return;
 	}
 
-    while(frames >= 1) {
-
-        if(frames > 1) {
-            frame_no++;
-            memcpy(udp_response[index], response[i], 1008);
-            i = i+1008;
-            current_length = current_length - 1008;
-            udp_response[index+1008+0] = 0x17;
-            udp_response[index+1008+1] = '\n';
-            udp_response[index+1008+2] = 0x17;
-            size = index+1008+3;
-            Send_Response_PrimaryAgent(status_code, size);
-
-        }
-        if(frames == 1) {
-            frame_no++;
-            memcpy(udp_response[index], response[i], current_length);
-            udp_response[index+current_length+0] = 0x3E;
-            udp_response[index+current_length+1] = '\0';
-            udp_response[index+current_length+2] = 0x3E;
-            size = current_length+index+3;
+    index = 0;
+    status_code = MIRROR_REPORT_RETURNED;
+    prepare_resp_header(status_code);
+    while(frames < total_frames) {
+        
+        frames++;
+        if(current_length <= MAXLINE) {
+            memcpy(udp_response, &response[index], current_length);
+            index += current_length;
+            size = current_length;
             Send_Response_PrimaryAgent(status_code, size);
         }
-        frames--;
+        else {
+            memcpy(udp_response, &response[index], MAXLINE);
+            index += MAXLINE;
+            size = MAXLINE;
+            current_length = current_length - MAXLINE;
+            status_code = MIRROR_REPORT_RETURNED;
+            Send_Response_PrimaryAgent(status_code, size);
+        }
     }
-
-
 }
 
 int prepare_resp_body(int index_resp) {
@@ -132,7 +121,7 @@ int prepare_resp_body(int index_resp) {
     
     return (index_resp+7);
 }
-responsr[RES_] = 
+
 void get_ModifiedFiles(char * path)
 {
     struct dirent *dir; 
