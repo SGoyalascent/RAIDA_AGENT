@@ -297,9 +297,9 @@ void prepare_udp_resp_body() {
             memcpy(udp_response[index], response[i], 1008);
             i = i+1008;
             current_length = current_length - 1008;
-            udp_response[index+1008+0] = '\n';
+            udp_response[index+1008+0] = 0x17;
             udp_response[index+1008+1] = '\n';
-            udp_response[index+1008+2] = '\n';
+            udp_response[index+1008+2] = 0x17;
             size = index+1008+3;
             Send_Response_PrimaryAgent(status_code, size);
 
@@ -307,9 +307,9 @@ void prepare_udp_resp_body() {
         if(frames == 1) {
             frame_no++;
             memcpy(udp_response[index], response[i], current_length);
-            udp_response[index+current_length+0] = '\0';
+            udp_response[index+current_length+0] = 0x3E;
             udp_response[index+current_length+1] = '\0';
-            udp_response[index+current_length+2] = '\0';
+            udp_response[index+current_length+2] = 0x3E;
             size = current_length+index+3;
             Send_Response_PrimaryAgent(status_code, size);
         }

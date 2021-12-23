@@ -140,6 +140,10 @@
 #define COIN_NO_NOT_FOUND					39
 #define SN_ALL_READY_IN_USE					40
 #define SERVICE_LOCKED						41
+
+#define AGENT_GET_PAGE                      40
+#define MIRROR_REPORT_CHANGES               45
+
 #define FAILED_TO_AUTHENTICATE					64
 #define PAGE_NOT_FOUND						66
 #define BREAK_COUNTER_FEIT					70
@@ -274,6 +278,9 @@ extern union respbody bytes;
 
 //------Raida_Agent----------------
 
+// 0x17(End of Transmission block) \n 0x17
+//0x3E \0 0x3E
+
 extern char execpath[256];
 extern char Agent_Mode[10];
 
@@ -289,6 +296,14 @@ struct server_config {
 	unsigned int bytes_per_frame;
 };
 extern struct server_config server_config_obj;
+
+union conversion {
+	uint32_t val32;
+    unsigned char byte2[2];
+	unsigned char byte4[4];
+};
+extern union conversion byteObj;
+
 
 //-------------------
 extern int sockfd;

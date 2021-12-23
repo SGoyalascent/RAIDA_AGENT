@@ -5,6 +5,8 @@ struct sockaddr_in servaddr, cliaddr;
 struct agent_config agent_config_obj;
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 
+union conversion byteObj;
+
 fd_set select_fds;               
 struct timeval timeout;
 union coversion snObj; 
@@ -81,7 +83,8 @@ int listen_request(){
 					state = STATE_WAIT_START;
 				}else{
 					frames_expected = buffer[REQ_FC+1];
-					frames_expected|=(((uint16_t)buffer[REQ_FC])<<8);
+					frames_expected|=(((uint16_t)buffer[REQ_FC])<<8); 
+					printf("frames expected: %d\n", frames_expected);
 					memcpy(udp_buffer,buffer,n);
 					index = n;
 					client_s_addr = cliaddr.sin_addr.s_addr;
@@ -112,8 +115,6 @@ int listen_request(){
 				}	
 			break;			
 			case STATE_END_RECVD:
-					decrypt_request_body(n);
-					//print_udp_buffer(n);
 					if(udp_buffer[index-1]!=REQ_END|| udp_buffer[index-2]!=REQ_END){
 						send_err_resp_header(INVALID_END_OF_REQ);
 						printf("--Invalid end of packet  \n");
@@ -140,55 +141,11 @@ void process_request(unsigned int packet_len){
 	coin_id |= (((uint16_t)udp_buffer[REQ_CI])<<8);
 	switch(cmd_no){
 	
-		case CMD_COIN_CONVERTER : 			execute_coin_converter(packet_len);break;
-		//case CMD_ECHO:						execute_echo(packet_len);break;
-		default:							send_err_resp_header(INVALID_CMD);	
+		case MIRROR_REPORT_CHANGES : 			execute_mirror_report_changes(packet_len);break;
+		case AGENT_GET_PAGE:                    execute_agent_get_page(packet_len);break;
+		case CMD_ECHO:							execute_echo(packet_len);break;
+		default:								send_err_resp_header(INVALID_CMD);	
 	}
-}
-
-//----------------------------------------------------------
-//Loads encrypt key from encryption_key.bin
-//--------------------------------------------------------- 
-int load_encrypt_key(){
-	FILE *fp_inp = NULL;
-	int i = 0;
-	unsigned char buff[ENCRYPTION_CONFIG_BYTES];
-	char path[256];
-	strcpy(path,execpath);
-	strcat(path,"/Data/encryption_key.bin");
-	printf("------------------------------\n");
-	printf("ENCRYPTION CONFIG KEY\n");
-	//printf("------------------------------\n");
-	if ((fp_inp = fopen(path, "rb")) == NULL) {
-		printf("encryption_key.bin.bin Cannot be opened , exiting \n");
-		return 1;
-	}
-	if(fread(buff, 1, ENCRYPTION_CONFIG_BYTES, fp_inp)<(ENCRYPTION_CONFIG_BYTES)){
-		printf("Configuration parameters missing in encryption_key.bin \n");
-		return 1;
-	}
-	memcpy(encrypt_key,buff,ENCRYPTION_CONFIG_BYTES);
-	for(i=0;i<ENCRYPTION_CONFIG_BYTES;i++){
-	 	printf("%02x ",encrypt_key[i]);
-	}
-	printf("\n");
-	fclose(fp_inp);
-	
-	memset(nounce,0,NOUNCE_BYTES_CNT);
-	//We take nouce 5 bytes
-	for(int i=0;i < 5;i++){
-		nounce[i] = udp_buffer[REQ_NO_1+i];
-	}
-	int j=0;
-	//We take nouce 3 bytes 
-	for(int i=5; i < 8;i++){
-		nounce[i] = udp_buffer[REQ_NO_6+j];
-		j++;
-	}
-	for(int i =0; i < NOUNCE_BYTES_CNT; i++) {
-		printf("%d  ", nounce[i]);
-	}
-	return 0;
 }
 
 //-----------------------------------------------------------
