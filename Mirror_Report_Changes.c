@@ -12,50 +12,14 @@ time_t t1;
 unsigned int coin_id;
 unsigned int table_id;
 unsigned int serial_no;
-unsigned int index = RES_HS+HS_BYTES_CNT;
-unsigned int index_resp = 0;
+unsigned int index = RES_HS + HS_BYTES_CNT;
+unsigned int resp_len = index_resp = RES_HS + HS_BYTES_CNT;
 unsigned int frame_count = 0;
 unsigned int frame_no = 0;
 
 union respbody bytes;
 
 
-void Call_ReportChanges_Mirror() {
-
-    unsigned char request_header[REQUEST_HEADER] = {0,0,2,0,0,45,0,0,0,0,0,0,22,22,0,1,0,0,0,0,0,0};
-    memcpy(send_buffer,request_header,REQUEST_HEADER);
-
-// Add challenge(CH) in the Request Body
-    for(int i=0; i < CH_BYTES_CNT; i++) {
-
-        send_buffer[REQUEST_HEADER +i ] = i+1;
-    }
-
-    show_dir_content();
-
-//Assign timestamp bytes in the buffer
-// YY, MM, DD, HH, MM, SS
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT] = tm.day;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 1] = tm.month;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 2] = tm.year;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 3] = ts.hour;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 4] = ts.minutes;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 5] = ts.second;
-
-//Request body End bytes
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 6] = 62;
-    send_buffer[REQUEST_HEADER + CH_BYTES_CNT + 7] = 62;
-    int len = REQUEST_HEADER+CH_BYTES_CNT+TIMESTAMP_BYTES_CNT+CMD_END_BYTES_CNT;
-    printf("send_buffer:- ");
-    for(int i=0; i < len; i++) {
-
-        printf("%d ", buffer[i] );
-    }
-    printf("\n");
-
-    sendto(sockfd, (const char *)send_buffer, len, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-
-}
 
 
 void Receive_response_Report_Changes_Mirror() {
@@ -72,53 +36,16 @@ void Receive_response_Report_Changes_Mirror() {
 
 }
 
-
-//-----------------------------------------------------------
-// Prepare error response and send it.
-//-----------------------------------------------------------
-void send_err_resp_header(int status_code){
-	int len,size=12;
-	unsigned char ex_time;
-	char * myfifo = "/tmp/myfifo";
-	time_stamp_after = get_time_cs();
-	if((time_stamp_after-time_stamp_before) > 255){
-		ex_time = 255;
-	}else{
-		ex_time= time_stamp_after-time_stamp_before;
-	}
-
-	response[RES_RI] = server_config_obj.raida_id;
-	response[RES_SH] = 0;
-	response[RES_SS] = status_code;
-	response[RES_EX] = 0;
-	response[RES_RE] = 0;
-	response[RES_RE+1] = 0;
-	response[RES_EC] = udp_buffer[REQ_EC];
-	response[RES_EC+1] = udp_buffer[REQ_EC+1];
-	response[RES_HS] = 0;
-	response[RES_HS+1] = 0;
-	response[RES_HS+2] = 0;
-	response[RES_HS+3] = 0;
-	len=sizeof(cliaddr);
-	
-	sendto(sockfd, (const char *)response, size,
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-		len);
-	
-}
-
-
-
-void Send_Response_PrimaryAgent(unsigned char status_code,unsigned int size){
+void Send_Response_toPrimaryAgent(unsigned char status_code,unsigned int size){
 	int len=sizeof(cliaddr);
 	char * myfifo = "/tmp/myfifo";
-	prepare_mirror_resp_header(status_code);
+	prepare_resp_header(status_code);
 	sendto(sockfd, (const char *)response, size,
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
 		len);
 }
 
-void prepare_mirror_resp_header(unsigned char status_code){
+void prepare_resp_header(unsigned char status_code){
 	unsigned char ex_time;
 	time_stamp_after = get_time_cs();
 	if((time_stamp_after-time_stamp_before) > 255){
@@ -127,20 +54,18 @@ void prepare_mirror_resp_header(unsigned char status_code){
 		ex_time= time_stamp_after-time_stamp_before;
 	}
 
-    bytes.val = frame_no;
-
-	udp_response[RES_RI] = server_config_obj.raida_id;
-	udp_response[RES_SH] = 0;
-	udp_response[RES_SS] = status_code;
-	udp_response[RES_EX] = ex_time;
-	udp_response[RES_RE] = bytes.byte_coin[0];
-	udp_response[RES_RE+1] = bytes.byte_coin[1];
-	udp_response[RES_EC] = udp_buffer[REQ_EC];
-	udp_response[RES_EC+1] = udp_buffer[REQ_EC+1];
-	udp_response[RES_HS] = 0;
-	udp_response[RES_HS+1] = 0;
-	udp_response[RES_HS+2] = 0;
-	udp_response[RES_HS+3] = 0;
+	response[RES_RI] = udp_response[RES_RI] = server_config_obj.raida_id;
+	response[RES_SH] = udp_response[RES_SH] = 0;
+	response[RES_SS] = udp_response[RES_SS] = status_code;
+	response[RES_EX] = udp_response[RES_EX] = ex_time;
+	response[RES_RE] = udp_response[RES_RE] = 0;        
+	response[RES_RE+1] = udp_response[RES_RE+1] = 0;    //frame count
+	response[RES_EC] = udp_response[RES_EC] = udp_buffer[REQ_EC];
+	response[RES_EC+1] = udp_response[RES_EC+1] = udp_buffer[REQ_EC+1];
+	response[RES_HS] = udp_response[RES_HS] = 0;
+	response[RES_HS+1] = udp_response[RES_HS+1] = 0;
+	response[RES_HS+2] = udp_response[RES_HS+2] = 0;
+	response[RES_HS+3] = udp_response[RES_HS+3] = 0;
 
 }   
 
@@ -194,21 +119,20 @@ void prepare_udp_resp_body() {
 int prepare_resp_body(int index_resp) {
     
     bytes.val = coin_id;
-
-    response[index_resp+0] = bytes.byte_coin[0];
-    response[index_resp+1] = bytes.byte_coin[1];
+    response[index_resp+0] = bytes.byte_coin[1]; //MSB
+    response[index_resp+1] = bytes.byte_coin[0];  //LSB
+    
     response[index_resp+2] = table_id;
 
     bytes.val = serial_no;
-
-    response[index_resp+3] = bytes.byte_sn[0];
-    response[index_resp+4] = bytes.byte_sn[1];
-    response[index_resp+5] = bytes.byte_sn[2];
-    response[index_resp+6] = bytes.byte_sn[3];
+    response[index_resp+3] = bytes.byte_sn[3]; // msb
+    response[index_resp+4] = bytes.byte_sn[2];
+    response[index_resp+5] = bytes.byte_sn[1];
+    response[index_resp+6] = bytes.byte_sn[0]; // lsb
     
     return (index_resp+7);
 }
-
+responsr[RES_] = 
 void get_ModifiedFiles(char * path)
 {
     struct dirent *dir; 
