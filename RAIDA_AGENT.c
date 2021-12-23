@@ -8,13 +8,18 @@
 char execpath[256];
 char Agent_Mode[10];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+struct timestamp tm;
 
-
+//-------------------------------------------------
+//Get the Working Directory
+//------------------------------------------------
 void get_execpath() {
     
     strcpy(execpath, "/opt/Testing/");
 }
-
+//-----------------------------------------------
+// Welcome Message
+//-----------------------------------------------
 void WelcomeMsg() {
     printf("\nWelcome to the RAIDA AGENT\n");
 }
@@ -103,14 +108,13 @@ void Read_Keys() {
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
 //-----------------------------------------------
-void show_dir_content(char * path)
+void get_latest_timestamp(char * path)
 {
     struct dirent *dir; 
     struct stat statbuf;
-    char datestring[256];
     struct tm *dt;
-    time_t t1 = 0;
-    time_t t2;
+    char datestring[256];
+    time_t t1 = 0, t2;
     double time_dif;
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -118,8 +122,7 @@ void show_dir_content(char * path)
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        char f_path[500];
-        char f_name[256];
+        char f_path[500], f_name[256];
         sprintf(f_name, "%s",dir->d_name);
         sprintf(f_path, "%s/%s", path, dir->d_name);
 
@@ -141,14 +144,14 @@ void show_dir_content(char * path)
                 t1 = t2;
                 printf("datestring: %s  ", datestring);
 
-                tm.year = dt->tm_year ;  //year from 1900
-                tm.month = dt->tm_mon;  //month in 0 - 11 range
+                tm.year = dt->tm_year ;  //year from 1900 ==>  2021 == 121
+                tm.month = dt->tm_mon;  //month in 0 - 11 range  ==> 12(dec) == 11
                 tm.day = dt->tm_mday;
                 tm.hour = dt->tm_hour;
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
-                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month,tm.year, tm.hour, tm.minutes, tm.second);
-                //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
+                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+                //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
             }
         }
         //if directory
@@ -167,7 +170,10 @@ int main() {
     Read_Agent_Configuration_Files();
     Read_Keys();
 
-    //Inspect the data files and find the day and time of the latest changes
+    char *path;
+    strcpy(path, execpath);
+    strcat(path, "Data");
+    get_latest_timestamp(path);
 
     int stat;
     if((stat = strcmp(Agent_Mode, "primary")) == 0) {
