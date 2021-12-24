@@ -25,7 +25,7 @@ void prepare_send_req_header() {
     request_header[REQ_RE] = 0;
     request_header[REQ_RE+1] = 0;
     request_header[REQ_RE+2] = 0;
-    request_header[REQ_EC] = 22;
+    request_header[REQ_EC] = 22;                 //
     request_header[REQ_EC+1] = 22;    
     request_header[REQ_FC] = 0;
     request_header[REQ_FC+1] = 1;    // udp packets sent
@@ -47,6 +47,7 @@ void prepare_send_req_header() {
     index_req += CH_BYTES_CNT;
 
 }
+
 //--------------------------------------------------------
 //Send Request to Mirror Raida
 //---------------------------------------------------------
@@ -57,7 +58,6 @@ void Send_Request_Mirror() {
 
 
 }
-
 
 //-----------------------------------------------------------
 //Set time out for UDP frames
@@ -92,6 +92,7 @@ int init_udp_socket() {
 		exit(EXIT_FAILURE);
 	}
 }
+
 //-----------------------------------------------------------
 //Receive Response from Mirror Raida
 //-----------------------------------------------------------
@@ -115,17 +116,17 @@ void Receive_response_Mirror_() {
 			break;		
 			case STATE_START_RECVD:
 				printf("---------------------RESPONSE HEADER RECEIVED ----------------------------\n");
-				 status_code = validate_response_header(buffer,n);
+				status_code = validate_response_header(buffer,n);
 				if(status_code != NO_ERR_CODE){
 					send_err_resp_header_toMirror(status_code);			
 					state = STATE_WAIT_START;
-				}else{
-					frames_expected = buffer[REQ_FC+1];
-					frames_expected|=(((uint16_t)buffer[REQ_FC])<<8); 
+				}
+				else {
+					frames_expected = buffer[RES_RE+1];
+					frames_expected|=(((uint16_t)buffer[RES_RE])<<8); 
 					printf("frames expected: %d\n", frames_expected);
 					memcpy(udp_buffer,buffer,n);
 					index = n;
-					client_s_addr = cliaddr.sin_addr.s_addr;
 					if(frames_expected == 1){
 						state = STATE_END_RECVD;
 					}else{
@@ -136,32 +137,33 @@ void Receive_response_Mirror_() {
 			case STATE_WAIT_END:
 				set_time_out(FRAME_TIME_OUT_SECS);
 				if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
-					send_err_resp_header(FRAME_TIME_OUT);
+					send_err_resp_header_toMirror(FRAME_TIME_OUT);
 					state = STATE_WAIT_START;
 					printf("Time out error \n");
-				}else{
-					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &cliaddr,&len);
-					if(client_s_addr==cliaddr.sin_addr.s_addr){
+				}
+				else {
+					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &servaddr,&len);
 						memcpy(&udp_buffer[index],buffer,n);
-						index+=n;
+						index += n;
 						curr_frame_no++;
 						printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
 						if(curr_frame_no==frames_expected){
 							state = STATE_END_RECVD;
 						}
-					}						
-				}	
+				}						
+					
 			break;			
 			case STATE_END_RECVD:
-					if(udp_buffer[index-1]!=REQ_END|| udp_buffer[index-2]!=REQ_END){
-						send_err_resp_header(INVALID_END_OF_REQ);
-						printf("--Invalid end of packet  \n");
-					}else{
-						printf("---------------------END RECVD----------------------------------------------\n");
-						printf("---------------------PROCESSING RESPONSE-----------------------------\n");
-						process_request(index);
-					}
-					state = STATE_WAIT_START;
+				if(udp_buffer[index-1]!=REQ_END|| udp_buffer[index-2]!=REQ_END){
+					send_err_resp_header_toMirror(INVALID_END_OF_REQ);
+					printf("--Invalid end of packet  \n");
+				}
+				else {
+					printf("---------------------END RECVD----------------------------------------------\n");
+					printf("---------------------PROCESSING RESPONSE-----------------------------\n");
+					process_request(index);
+				}
+				state = STATE_WAIT_START;
 			break;
 		}
 	}
@@ -170,34 +172,27 @@ void Receive_response_Mirror_() {
 //-----------------------------------------------------------
 //  Validate request header
 //-----------------------------------------------------------
-unsigned char validate_request_header(unsigned char * buff,int packet_size){
-	uint16_t frames_expected,request_header_exp_len= REQ_HEAD_MIN_LEN;
-	printf("---------------Validate Req Header-----------------\n");
+unsigned char validate_response_header(unsigned char * buff,int packet_size){
+	uint16_t frames_expected,resp_header_exp_len= RESP_HEADER_MIN_LEN;
+	printf("---------------Validate Response Header-----------------\n");
 	
-	if(buff[REQ_EN]!=0 && buff[REQ_EN]!=1){
-		return INVALID_EN_CODE;
-	}
-	if(packet_size< request_header_exp_len){
-		printf("Invalid request header  \n");
+	if(packet_size < resp_header_exp_len){
+		printf("Invalid Response Header  \n");
 		return INVALID_PACKET_LEN;
 	}
-	frames_expected = buff[REQ_FC+1];
-	frames_expected|=(((uint16_t)buff[REQ_FC])<<8);
+	frames_expected = buff[RES_RE+1];
+	frames_expected|=(((uint16_t)buff[RES_RE])<<8);
 	if(frames_expected <=0  || frames_expected > FRAMES_MAX){
 		printf("Invalid frame count  \n");
 		return INVALID_FRAME_CNT;
 	}	
-	if(buff[REQ_CL]!=0){
-		printf("Invalid cloud id \n");
-		return INVALID_CLOUD_ID;
-	}
-	if(buff[REQ_SP]!=0){
-		printf("Invalid split id \n");
-		return INVALID_SPLIT_ID;
-	}
-	if(buff[REQ_RI]!=server_config_obj.raida_id){
+	if(buff[RES_RI] != server_config_obj.raida_id){
 		printf("Invalid Raida id \n");
 		return WRONG_RAIDA;
+	}
+	if(buff[RES_EC] != && buff[RES_EC+1] != ) {
+
+
 	}
 	return NO_ERR_CODE;
 }

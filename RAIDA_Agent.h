@@ -94,7 +94,10 @@
 #define LEGACY_RAIDA_TK_BYTES_CNT		22
 #define MD_HASH_BYTES_CNT		32
 #define META_DATA_BYTES_CNT		50
+
 #define REQ_END					62
+#define RESP_END                62
+
 #define KEY_HASH_BYTES_CNT		64
 
 //-------------------------------------------------
@@ -115,6 +118,8 @@
 #define RES_RE 						4
 #define RES_EC 						6
 #define RES_HS 						8
+
+#define RESP_HEADER_MIN_LEN         12
 //---------Status Error codes----------------------------------------
 #define INVALID_CLOUD_ID 		   				1
 #define RAIDA_ OFFLINE 			   			2
