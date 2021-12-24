@@ -235,17 +235,7 @@
 
 
 
-struct timestamp {
 
-    unsigned char year;
-    unsigned char month;
-    unsigned char day;
-    unsigned char hour;
-    unsigned char minutes;
-    unsigned char second;
-};
-
-extern struct timestamp tm;
 extern struct timestamp recv_tm;
 
 extern unsigned char udp_response[MAXLINE];
@@ -286,7 +276,6 @@ union conversion {
 extern union conversion byteObj;
 
 struct timestamp {
-
     unsigned char year;
     unsigned char month;
     unsigned char day;
@@ -294,7 +283,6 @@ struct timestamp {
     unsigned char minutes;
     unsigned char second;
 };
-
 extern struct timestamp tm;
 
 
