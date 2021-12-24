@@ -175,15 +175,30 @@ int main() {
     strcat(path, "Data");
     get_latest_timestamp(path);
 
+    /*
     int stat;
-    if((stat = strcmp(Agent_Mode, "primary")) == 0) {
-        //
+    if((stat = strcmp(Agent_Mode, "primary")) == 0){
+
     }
     else if((stat = strcmp(Agent_Mode, "mirror"))) {
 
     }
     else if((stat = strcmp(Agent_Mode, "witness"))) {
 
+    }*/
+
+    //Assume Primary RAIDA AGENT
+
+    unsigned char status_code;
+    Call_Report_Changes_Service();
+    status_code = Process_response_Report_Changes();
+
+    printf("Mirror Report Changes---Status_Code: %s\n", status_code);
+    if(status_code == MIRROR_REPORT_RETURNED) {
+        for() {
+            Call_Mirror_Get_Page_Service();
+            Process_response_Get_Page();
+        }
     }
 
     return 0;

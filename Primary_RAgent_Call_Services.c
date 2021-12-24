@@ -4,7 +4,6 @@ struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char udp_buffer[UDP_BUFF_SIZE],send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
 unsigned char recv_response[RESPONSE_HEADER_MAX];
-int index_req = 0;
 time_t t1;
 
 
@@ -47,8 +46,10 @@ void set_time_out(unsigned char secs){
 //-------------------------------------------------------
 //Request Header to Call Mirror Services
 //---------------------------------------------------------
-void prepare_send_req_header(unsigned char command_code) {
+int prepare_send_req_header(unsigned char command_code) {
     
+	int index_req = 0;
+
     request_header[REQ_CL] = 0;
     request_header[REQ_SP] = 0;
     request_header[REQ_RI] = server_config_obj.raida_id;    // raida_no.
@@ -81,14 +82,14 @@ void prepare_send_req_header(unsigned char command_code) {
     }
     index_req += CH_BYTES_CNT;
 
+	return index_req;
 }
 
 //--------------------------------------------------------
 //Send Request to Mirror Raida
 //---------------------------------------------------------
-void Send_Request(unsigned char command_code, unsigned int size) {
+void Send_Request(unsigned int size) {
 	char * myfifo = "/tmp/myfifo";
-	prepare_send_req_header(command_code);
 	sendto(sockfd, (const char *)send_req_buffer, size,
 	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 
@@ -97,7 +98,7 @@ void Send_Request(unsigned char command_code, unsigned int size) {
 //-----------------------------------------------------------
 //Receive Response from Mirror Raida
 //-----------------------------------------------------------
-void Receive_response() {
+int Receive_response() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
 	uint16_t frames_expected=0,curr_frame_no=0,n=0,index=0;
 	//uint32_t client_s_addr=0; 	
@@ -143,14 +144,14 @@ void Receive_response() {
 					printf("Time out error \n");
 				}
 				else {
-					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, ( struct sockaddr *) &servaddr,&len);
-						memcpy(&recv_response[index],buffer,n);
-						index += n;
-						curr_frame_no++;
-						printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
-						if(curr_frame_no==frames_expected){
-							state = STATE_END_RECVD;
-						}
+					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, (struct sockaddr *) &servaddr,&len);
+					memcpy(&recv_response[index],buffer,n);
+					index += n;
+					curr_frame_no++;
+					printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+					if(curr_frame_no==frames_expected){
+						state = STATE_END_RECVD;
+					}
 				}						
 					
 			break;			
@@ -165,6 +166,7 @@ void Receive_response() {
 			break;
 		}
 	}
+	return index;
 }
 
 //-----------------------------------------------------------
@@ -197,10 +199,12 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 //------------------------------------------------------------------------------------------
 //  Validate Response body 
 //-----------------------------------------------------------------------------------------
-unsigned char validate_resp_body_general(unsigned int packet_len,unsigned int resp_body,int *resp_header_min){
+unsigned char validate_resp_body_general(unsigned int packet_len,int *resp_body,int *resp_header_min){
 	*resp_header_min = RESP_HEADER_MIN_LEN;
-	if(packet_len != (*resp_header_min) + resp_body){
-		printf("Error: Response body not validated. Error: Invalid End of packet\n ");
+	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
+
+	if(*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0) {
+		printf("Error: Response body does not match. Invalid Packet length\n");
 		return 0;
 	}
 	return 1;
@@ -208,7 +212,10 @@ unsigned char validate_resp_body_general(unsigned int packet_len,unsigned int re
 
 void Call_Report_Changes_Service() {
 
+	printf("-------Call Mirror Report Changes Service----------\n");
+	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
+	int index_req = prepare_send_req_header(command_code);
 
 	//Assign timestamp bytes in the buffer
 	// YY, MM, DD, HH, MM, SS
@@ -231,15 +238,72 @@ void Call_Report_Changes_Service() {
     }
     printf("\n");
 
-	Send_Request(command_code, len);
-	Process_response_Report_Changes();
+	Send_Request(len);
+	
 
 }
 
-void Process_response_Report_Changes() {
+unsigned char Process_response_Report_Changes() {
 
-	Receive_response();
-	
+	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
+	unsigned char status_code;
+	int resp_header_min;
+
+	packet_len = Receive_response();
+	status_code = recv_response[RES_SS];
+
+	printf("--------STATUS:");
+
+	if(status_code == MIRROR_REPORT_RETURNED) {
+		printf("Returned Files need to be Synchronised\n");
+	}
+	else if(status_code == RAIDA_AGENT_NO_CHANGES) {
+		printf("No Changes. All Files already Synchronized\n");
+		return RAIDA_AGENT_NO_CHANGES;
+	}
+	else {
+		printf("status_code: %s. Error: Status code does not match\n");
+		return status_code;
+	}
+	if(validate_resp_body_general(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
+		printf("Error:\n");
+	}
+
+	index = resp_header_min;
+
+	unsigned int total_files_count = 0;
+
+	total_files_count = resp_body_without_end_bytes/RAIDA_AGENT_FILE_ID_BYTES_CNT;
+	printf("No. of files need to be synchronized: %u\n", total_files_count);
+
+	unsigned char files_id[total_files_count][RAIDA_AGENT_FILE_ID_BYTES_CNT];
+
+	for(int i =0; i < total_files_count; i++) {
+		memcpy(&files_id[i][0], &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
+		index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
+	}
+
+	for(int i=0; i < total_files_count; i++) {
+		printf("File-%d: ", i+1);
+		for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT; j++) {
+			printf("%d ", files_id[i][j]);
+		}
+		printf("\n");
+	}
+
+	return status_code;
+}
+
+void Call_Mirror_Get_Page_Service() {
+
+	printf("------------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
+
+	unsigned char command_code = AGENT_GET_PAGE;
+	int index_req = prepare_send_req_header(command_code);
+
+}
+
+void Process_response_Get_Page() {
 
 
 
