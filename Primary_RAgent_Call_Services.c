@@ -8,7 +8,9 @@ unsigned char request_header[REQ_HEAD_MIN_LEN];
 int index_req = 0;
 time_t t1;
 
-
+//-------------------------------------------------------
+//Request Header to Call Mirror Services
+//---------------------------------------------------------
 void prepare_send_req_header() {
     
     request_header[REQ_CL] = 0;
@@ -26,7 +28,7 @@ void prepare_send_req_header() {
     request_header[REQ_EC] = 22;
     request_header[REQ_EC+1] = 22;    
     request_header[REQ_FC] = 0;
-    request_header[REQ_FC+1] = total_frames;    // udp packets sent
+    request_header[REQ_FC+1] = 1;    // udp packets sent
     request_header[REQ_EN] = 0;           //encryption code
     request_header[REQ_ID] = 0;
     request_header[REQ_ID+1] = 0;
@@ -45,9 +47,16 @@ void prepare_send_req_header() {
     index_req += CH_BYTES_CNT;
 
 }
+//--------------------------------------------------------
+//Send Request to Mirror Raida
+//---------------------------------------------------------
+void Send_Request_Mirror() {
+	sendto(sockfd, (const char *)buffer, len,
+	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, 
+	            sizeof(servaddr));
 
 
-
+}
 
 
 //-----------------------------------------------------------
@@ -64,29 +73,32 @@ void set_time_out(unsigned char secs){
 //Initialize UDP Socket and bind to the port
 //-----------------------------------------------------------
 int init_udp_socket() {
-	// Creating socket file descriptor
+	
 	printf("init_udp_socket\n");
 	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
 	}
 	memset(&servaddr, 0, sizeof(servaddr));
-	memset(&cliaddr, 0, sizeof(cliaddr));
-	// Filling server information
-	servaddr.sin_family = AF_INET; // IPv4
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(server_config_obj.port_number);
-	// Bind the socket with the server address
+	//memset(&cliaddr, 0, sizeof(cliaddr));
+	
+	servaddr.sin_family = AF_INET; 
+	//servaddr.sin_addr.s_addr = INADDR_ANY;
+	servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
+	servaddr.sin_port = htons(Primary_agent_config.port_number);    //Primary port no.
+
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
 }
-
-void Receive_response_Mirror_Report_Changes() {
+//-----------------------------------------------------------
+//Receive Response from Mirror Raida
+//-----------------------------------------------------------
+void Receive_response_Mirror_() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
-	uint16_t frames_expected=0,curr_frame_no=0,n=0,i,index=0;
-	uint32_t client_s_addr=0; 	
+	uint16_t frames_expected=0,curr_frame_no=0,n=0,index=0;
+	//uint32_t client_s_addr=0; 	
 	socklen_t len = sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
 	while(1){
@@ -95,7 +107,7 @@ void Receive_response_Mirror_Report_Changes() {
 			case STATE_WAIT_START:
 				printf("---------------------WAITING FOR RESPONSE HEADER ----------------------\n");	
 				memset(buffer,0,server_config_obj.bytes_per_frame);
-				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &cliaddr,&len);
+				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
 				printf("n: %d\n", n);
 				curr_frame_no=1;
 				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
@@ -103,9 +115,9 @@ void Receive_response_Mirror_Report_Changes() {
 			break;		
 			case STATE_START_RECVD:
 				printf("---------------------RESPONSE HEADER RECEIVED ----------------------------\n");
-				 status_code = validate_request_header(buffer,n);
+				 status_code = validate_response_header(buffer,n);
 				if(status_code != NO_ERR_CODE){
-					send_err_resp_header(status_code);			
+					send_err_resp_header_toMirror(status_code);			
 					state = STATE_WAIT_START;
 				}else{
 					frames_expected = buffer[REQ_FC+1];
