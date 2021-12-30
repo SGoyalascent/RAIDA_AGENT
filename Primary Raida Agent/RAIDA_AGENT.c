@@ -173,6 +173,7 @@ int main() {
     char *path;
     strcpy(path, execpath);
     strcat(path, "Data");
+    
     get_latest_timestamp(path);
 
     /*

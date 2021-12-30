@@ -4,6 +4,8 @@ struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char udp_buffer[UDP_BUFF_SIZE],send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
 unsigned char recv_response[RESPONSE_HEADER_MAX];
+unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
+unsigned int total_files_count = 0;
 time_t t1;
 
 
@@ -199,7 +201,7 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 //------------------------------------------------------------------------------------------
 //  Validate Response body 
 //-----------------------------------------------------------------------------------------
-unsigned char validate_resp_body_general(unsigned int packet_len,int *resp_body,int *resp_header_min){
+unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *resp_body,int *resp_header_min){
 	*resp_header_min = RESP_HEADER_MIN_LEN;
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
@@ -209,6 +211,10 @@ unsigned char validate_resp_body_general(unsigned int packet_len,int *resp_body,
 	}
 	return 1;
 }
+
+//----------------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------------
 
 void Call_Report_Changes_Service() {
 
@@ -265,18 +271,18 @@ unsigned char Process_response_Report_Changes() {
 		printf("status_code: %s. Error: Status code does not match\n");
 		return status_code;
 	}
-	if(validate_resp_body_general(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
+	if(validate_resp_body_report_changes(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
 		printf("Error:\n");
 	}
 
 	index = resp_header_min;
 
-	unsigned int total_files_count = 0;
+	//unsigned int total_files_count = 0;
 
 	total_files_count = resp_body_without_end_bytes/RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	printf("No. of files need to be synchronized: %u\n", total_files_count);
 
-	unsigned char files_id[total_files_count][RAIDA_AGENT_FILE_ID_BYTES_CNT];
+	//unsigned char files_id[total_files_count][RAIDA_AGENT_FILE_ID_BYTES_CNT];
 
 	for(int i =0; i < total_files_count; i++) {
 		memcpy(&files_id[i][0], &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
@@ -301,11 +307,58 @@ void Call_Mirror_Get_Page_Service() {
 	unsigned char command_code = AGENT_GET_PAGE;
 	int index_req = prepare_send_req_header(command_code);
 
+	memcpy(&send_req_buffer[index_req], &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
+	memcpy(req_file_id, &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
+
+	send_req_buffer[index_req+0] = 62;
+	send_req_buffer[index_req+1] = 62;
+
+	unsigned int len = index_req + RAIDA_AGENT_FILE_ID_BYTES_CNT + CMD_END_BYTES_CNT;
+
+	printf("send_buffer:- ");
+    for(int i=0; i < len; i++) {
+        printf("%d ", buffer[i] );
+    }
+    printf("\n");
+
+	Send_Request(len);
+
 }
 
 void Process_response_Get_Page() {
 
+	unsigned int packet_len = 0, index = 0, size = 0;
+	unsigned char status_code;
 
+	packet_len = Receive_response();
+	status_code = recv_response[RES_SS];
 
+	printf("--------STATUS:");
 
+	if(status_code == SUCCESS) {
+		printf("File Page returned\n");
+	}
+	else if(status_code == MIRROR_REQUESTED_FILE_NOT_EXIST) {
+		printf("Requested file does not exist\n");
+		return status_code;
+	}
+	else {
+		printf("status_code: %s. Error: Status code does not match\n");
+		return status_code;
+	}
+
+	index = RESP_HEADER_MIN_LEN;
+
+	unsigned char recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
+
+	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
+	index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
+
+	if(memcmp(recv_file_id, req_file_id, RAIDA_AGENT_FILE_ID_BYTES_CNT) != 0) {
+		printf("Error: Requested File and Received File not same\n");
+		status_code = FAIL;
+		return status_code;
+	}
+
+	
 }

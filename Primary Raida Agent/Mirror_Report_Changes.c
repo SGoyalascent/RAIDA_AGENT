@@ -182,6 +182,20 @@ void get_ModifiedFiles(char * path)
             char *token;
             token = strtok(sub_path, "/");
             strcpy(coin, token);
+            
+            if(strcmp(coin, "Owners") == 0) {  
+                coin_id = 254;
+                table_id = 0;
+                serial_no = atoi(df_name); 
+                continue;
+            }
+
+            if(strcmp(coin, "my_id_coins") == 0) {
+                coin_id = 255;
+                table_id = 0;
+                serial_no = atoi(df_name); 
+                continue;
+            }
 
             token = strtok(NULL, "/");
             strcpy(table, token);
@@ -193,9 +207,6 @@ void get_ModifiedFiles(char * path)
             serial_no = atoi(df_name);   //12345.bin file -->  12345
 
             if(strcmp(table, "ANs") == 0) {
-                table_id = 0;
-            }
-            else if(strcmp(table, "Owners") == 0) {
                 table_id = 1;
             }
             else if(strcmp(table, "Statements") == 0) {

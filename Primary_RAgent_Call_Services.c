@@ -240,7 +240,6 @@ void Call_Report_Changes_Service() {
 
 	Send_Request(len);
 	
-
 }
 
 unsigned char Process_response_Report_Changes() {
@@ -305,7 +304,31 @@ void Call_Mirror_Get_Page_Service() {
 
 void Process_response_Get_Page() {
 
+	
+	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
+	unsigned char status_code;
+	int resp_header_min;
 
+	packet_len = Receive_response();
+	status_code = recv_response[RES_SS];
+
+	printf("--------STATUS:");
+
+	if(status_code == SUCCESS) {
+		printf("cONTENTS OF fILES RETURNED\n");
+	}
+	else if(status_code == RAIDA_AGENT_NO_CHANGES) {
+		printf("No Changes. All Files already Synchronized\n");
+		return RAIDA_AGENT_NO_CHANGES;
+	}
+	else {
+		printf("status_code: %s. Error: Status code does not match\n");
+		return status_code;
+	}
+	if(validate_resp_body_general(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
+		printf("Error:\n");
+	}
+	
 
 
 }
