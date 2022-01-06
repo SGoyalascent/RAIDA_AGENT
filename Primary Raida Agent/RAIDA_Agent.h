@@ -200,6 +200,7 @@
 #define  UDP_RESPONSE 						0
 #define  FIFO_RESPONSE 						1
 
+
 //-----------RAIDA Agent Codes---------------------------------------
 
 #define TABLE_ID_ANS                0
@@ -226,40 +227,15 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-extern struct timestamp recv_tm;
-
-extern unsigned char udp_response[MAXLINE];
-extern time_t t1;
-extern unsigned int coin_id;
-extern unsigned int table_id;
-extern unsigned int serial_no;
-extern unsigned int index = RES_HS+HS_BYTES_CNT;
-extern unsigned int index_resp = 0;
-extern unsigned int frame_count = 0;
-extern unsigned int frame_no = 0;
-
-
-//------Raida_Agent----------------
+//------MAIN----------------
 
 extern char execpath[256];
+extern char serverpath[256];
 extern char Agent_Mode[10];
 
+//-------
+
+//--------------------------------------------
 struct agent_config {
     char Ip_address[20];
     unsigned int port_number;
@@ -314,19 +290,9 @@ extern unsigned int frame_no = 0;
 
 
 //------------------------------------------------------------------------
-int listen_request(); 
-void* listen_request_raida(void *arg);
-int init_udp_socket();
-int load_encrypt_key();
-void set_time_out(unsigned char);
-void process_request(unsigned int);
-void execute_coin_converter(unsigned int);
-void send_response(unsigned char ,unsigned int );
-void send_err_resp_header(int );
-void execute_echo(unsigned int);
-void print_udp_buffer(int);
-void decrypt_request_body(int);
-unsigned char validate_request_header(unsigned char *,int );
-unsigned char validate_request_body_general(unsigned int,unsigned int ,int *);
-unsigned char validate_request_body(unsigned int ,unsigned char,unsigned int ,int *);
+void get_execpath();
+void WelcomeMsg();
+void Read_Agent_Configuration_Files();
+void get_latest_timestamp(char *);
+
 #endif

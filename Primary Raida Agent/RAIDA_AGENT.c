@@ -4,25 +4,78 @@
 
 #include "RAIDA_Agent.h"
 
-
-char execpath[256];
+char execpath[256], serverpath[256];
 char Agent_Mode[10];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 struct timestamp tm;
 
-//-------------------------------------------------
-//Get the Working Directory
-//------------------------------------------------
-void get_execpath() {
-    
-    strcpy(execpath, "/opt/Testing/");
-}
+
 //-----------------------------------------------
 // Welcome Message
 //-----------------------------------------------
 void WelcomeMsg() {
     printf("\nWelcome to the RAIDA AGENT\n");
 }
+//-------------------------------------------------
+//Get the Working Directory
+//------------------------------------------------
+void get_execpath() {
+    
+    strcpy(execpath, "/opt/Testing/");
+    printf("execpath: %s\n", execpath);
+}
+//---------------------------------------------------------
+// Get the current directory path starting from home dir
+//---------------------------------------------------------
+void getexepath()
+{
+  char buff[256];
+  int count = readlink( "/proc/self/exe", buff, 256);
+  int i=0,slash_pos;
+  while(buff[i]!='\0'){
+	if(buff[i]=='/'){
+		slash_pos = i;
+	}
+	i++;
+  }	
+  strncpy(serverpath,buff,slash_pos);
+}
+//----------------------------------------------------------
+//Loads raida no from raida_no.txt
+//----------------------------------------------------------
+int load_raida_no(){
+	FILE *fp_inp=NULL;
+	int size=0,ch;
+	unsigned char buff[24];
+	char path[256];
+	strcpy(path,serverpath);
+	strcat(path,"/Data/raida_no.txt");
+	if ((fp_inp = fopen(path, "r")) == NULL) {
+		printf("raida_no.txt Cannot be opened , exiting \n");
+		return 1;
+	}
+	while( ( ch = fgetc(fp_inp) ) != EOF ){
+		size++;
+	}
+	fclose(fp_inp);
+	fp_inp = fopen(path, "r");
+	if(fread(buff, 1, size, fp_inp)<size){
+		printf("Configuration parameters missing in raida_no.txt \n");
+		return 1;
+	}
+	if(size == 2){
+		server_config_obj.raida_id = (buff[0]-48)*10;
+		server_config_obj.raida_id+= (buff[1]-48);
+	}else{
+		server_config_obj.raida_id=buff[0]-48;
+	}
+
+    server_config_obj.bytes_per_frame = 1024;
+
+	printf("Raida Id  :-%d Bytes_per_frame: %d\n", server_config_obj.raida_id, server_config_obj.bytes_per_frame);
+	fclose(fp_inp);
+	return 0;
+}	
 
 //--------------------------------------------------
 //READ CONFIG FILE, IP ADDRESS AND PORT
@@ -34,7 +87,7 @@ void Read_Agent_Configuration_Files() {
     struct dirent *dir; 
     DIR *d = opendir(path); 
     if(d == NULL) {
-        printf("Error\n");  
+        printf("Error. Can't find directory path\n");  
     }
     int i=0;
     while ((dir = readdir(d)) != NULL) 
@@ -102,9 +155,6 @@ void Read_Agent_Configuration_Files() {
 //READ KEYS.bin FILE
 //-----------------------------------------------
 
-void Read_Keys() {
-
-}
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
 //-----------------------------------------------
@@ -165,15 +215,18 @@ void get_latest_timestamp(char * path)
 
 int main() {
 
+    printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
     WelcomeMsg();
     get_execpath();
+    printf("-->MAIN: READ-Agent-Configuration-Files---\n");
     Read_Agent_Configuration_Files();
-    Read_Keys();
+    //Read_Keys();
 
     char *path;
     strcpy(path, execpath);
     strcat(path, "Data");
-    
+    printf("-->MAIN: path: %s\n", path);
+    printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
 
     /*
@@ -190,14 +243,20 @@ int main() {
 
     //Assume Primary RAIDA AGENT
 
+    init_udp_socket();
+
     unsigned char status_code;
+    printf("-->MAIN: CALL-REPORT-CHANGES-SERVICE-----\n");
     Call_Report_Changes_Service();
+    printf("-->MAIN: Call Process-Response-Report-Changes---\n");
     status_code = Process_response_Report_Changes();
 
-    printf("Mirror Report Changes---Status_Code: %s\n", status_code);
+    printf("-->MAIN: Report Changes---Status_Code: %s\n", status_code);
     if(status_code == MIRROR_REPORT_RETURNED) {
         for() {
+            printf("MAIN: CALL- GET-page-service\n");
             Call_Mirror_Get_Page_Service();
+            printf("MAIN: Process-Get-page\n");
             Process_response_Get_Page();
         }
     }

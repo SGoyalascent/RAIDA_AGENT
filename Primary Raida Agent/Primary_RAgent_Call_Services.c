@@ -218,7 +218,7 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 
 void Call_Report_Changes_Service() {
 
-	printf("-------Call Mirror Report Changes Service----------\n");
+	printf("-------Call Report Changes Service----------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
 	int index_req = prepare_send_req_header(command_code);
@@ -245,8 +245,6 @@ void Call_Report_Changes_Service() {
     printf("\n");
 
 	Send_Request(len);
-	
-
 }
 
 unsigned char Process_response_Report_Changes() {
