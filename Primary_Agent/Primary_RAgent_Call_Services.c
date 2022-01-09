@@ -122,12 +122,12 @@ int Receive_response() {
 				status_code = validate_response_header(buffer,n);
 				if(status_code != NO_ERR_CODE){
 					printf("Error: Response Header not validated. Error_no: %s\n", status_code);			
-					state = STATE_WAIT_START;
+					return 0;
 				}
 				else {
 					frames_expected = buffer[RES_RE+1];
 					frames_expected|=(((uint16_t)buffer[RES_RE])<<8); 
-					printf("frames expected: %d\n", frames_expected);
+					//printf("frames expected: %d\n", frames_expected);
 					memcpy(recv_response,buffer,n);
 					index = n;
 					if(frames_expected == 1){
@@ -140,29 +140,27 @@ int Receive_response() {
 			case STATE_WAIT_END:
 				set_time_out(FRAME_TIME_OUT_SECS);
 				if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
-					//send_err_resp_header_toMirror(FRAME_TIME_OUT);
-					state = STATE_WAIT_START;
-					printf("Time out error \n");
+					printf("ERROR: Fmare Timeout. All frames not received.\n");
+					return 0;
 				}
 				else {
 					n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL, (struct sockaddr *) &servaddr,&len);
 					memcpy(&recv_response[index],buffer,n);
 					index += n;
 					curr_frame_no++;
-					printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+					printf("RECVD FRAME NO: %d\n", curr_frame_no);
 					if(curr_frame_no==frames_expected){
 						state = STATE_END_RECVD;
 					}
-				}						
-					
+				}	
 			break;			
 			case STATE_END_RECVD:
 				if(recv_response[index-1] != RESP_END|| recv_response[index-2] != RESP_END){
-					printf("--Error: Invalid end of Response packet  \n");
+					printf("Error: Invalid end of Response packet  \n");
+					return 0;
 				}
 				else {
-					printf("---------------------END RECVD----------------------------------------------\n");
-					printf("---------------------PROCESSING RESPONSE-----------------------------\n");
+					printf("--------RESPONSE END RECVD---------\n");
 				}
 			break;
 		}
@@ -206,8 +204,13 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 	*resp_header_min = RESP_HEADER_MIN_LEN;
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
-	if(*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0) {
+	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
+	if((*resp_body != 0) && (*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0)) {
 		printf("Error: Response body does not match. Invalid Packet length\n");
+		return 0;
+	}
+	if(*resp_body == 0) {
+		printf("ERROR: Empty Response Body\n");
 		return 0;
 	}
 	return 1;
@@ -259,33 +262,35 @@ unsigned char Process_response_Report_Changes() {
 	printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
 
 	packet_len = Receive_response();
-	status_code = recv_response[RES_SS];
-
-	printf("--STATUS:");
-
-	if(status_code == MIRROR_REPORT_RETURNED) {
-		printf("Returned Files need to be Synchronised\n");
+	if(packet_len == 0) {
+		printf("Error: Response received incorrectly. Request Again.\n");
+		return FAIL;
 	}
-	else if(status_code == RAIDA_AGENT_NO_CHANGES) {
+
+	status_code = recv_response[RES_SS];
+	printf("STATUS: %d\n", status_code);
+
+	/*
+	if(status_code == MIRROR_REPORT_RETURNED) {
+		printf("Reuested File names returned\n");
+	} 
+	else {
+		printf("status_code: %s. Error: Status code does not match. Request\n");
+		return status_code;
+	} */
+
+	if(status_code == RAIDA_AGENT_NO_CHANGES) {
 		printf("No Changes. All Files already Synchronized\n");
 		return RAIDA_AGENT_NO_CHANGES;
 	}
-	else {
-		printf("status_code: %s. Error: Status code does not match\n");
-		return status_code;
-	}
+	
 	if(validate_resp_body_report_changes(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
-		printf("Error:\n");
+		return FAIL;
 	}
 
 	index = resp_header_min;
-
-	//unsigned int total_files_count = 0;
-
 	total_files_count = resp_body_without_end_bytes/RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	printf("No. of files need to be synchronized: %u\n", total_files_count);
-
-	//unsigned char files_id[total_files_count][RAIDA_AGENT_FILE_ID_BYTES_CNT];
 
 	for(int i =0; i < total_files_count; i++) {
 		memcpy(&files_id[i][0], &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
@@ -293,7 +298,7 @@ unsigned char Process_response_Report_Changes() {
 	}
 
 	for(int i=0; i < total_files_count; i++) {
-		printf("File-%d: ", i+1);
+		printf("File_id-%d: ", i+1);
 		for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT; j++) {
 			printf("%d ", files_id[i][j]);
 		}
