@@ -2,8 +2,8 @@
 
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
-unsigned char udp_buffer[UDP_BUFF_SIZE],send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
-unsigned char recv_response[RESPONSE_HEADER_MAX];
+unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
+unsigned char recv_response[RESPONSE_HEADER_MAX], udp_buffer[UDP_BUFF_SIZE];
 unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 unsigned int total_files_count = 0;
 time_t t1;
@@ -25,7 +25,7 @@ int init_udp_socket() {
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
-	servaddr.sin_port = htons(Primary_agent_config.port_number);    //Primary port no.
+	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Primary port no.
 
 /*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
@@ -102,24 +102,23 @@ void Send_Request(unsigned int size) {
 //-----------------------------------------------------------
 int Receive_response() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
-	uint16_t frames_expected=0,curr_frame_no=0,n=0,index=0;
-	//uint32_t client_s_addr=0; 	
+	unsigned int frames_expected=0,curr_frame_no=0,n=0,index=0;	
 	socklen_t len = sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
 	while(1){
-		//printf("state: %d", state);
+		printf("state: %d", state);
 		switch(state){
 			case STATE_WAIT_START:
-				printf("---------------------WAITING FOR RESPONSE HEADER ----------------------\n");	
+				printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
 				memset(buffer,0,server_config_obj.bytes_per_frame);
 				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
 				printf("n: %d\n", n);
 				curr_frame_no=1;
-				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+				printf("--RECVD_FRAME NO: %d\n", curr_frame_no);
 				state = STATE_START_RECVD;	
 			break;		
 			case STATE_START_RECVD:
-				printf("---------------------RESPONSE HEADER RECEIVED ----------------------------\n");
+				printf("---RESPONSE RECEIVED ------------\n");
 				status_code = validate_response_header(buffer,n);
 				if(status_code != NO_ERR_CODE){
 					printf("Error: Response Header not validated. Error_no: %s\n", status_code);			
@@ -175,25 +174,27 @@ int Receive_response() {
 //  Validate Response header
 //-----------------------------------------------------------
 unsigned char validate_response_header(unsigned char * buff,int packet_size){
-	uint16_t frames_expected,resp_header_exp_len= RESP_HEADER_MIN_LEN;
-	printf("---------------Validate Response Header-----------------\n");
+	int frames_expected,resp_header_exp_len= RESP_HEADER_MIN_LEN;
+	printf("---VALIDATE RESPONSE HEADER-------\n");
 	
 	if(packet_size < resp_header_exp_len){
-		printf("Invalid Response Header  \n");
+		printf("ERROR: Invalid Response Header  \n");
 		return INVALID_PACKET_LEN;
 	}
 	frames_expected = buff[RES_RE+1];
 	frames_expected|=(((uint16_t)buff[RES_RE])<<8);
+	printf("frames_expected: %d\n", frames_expected);
 	if(frames_expected <=0  || frames_expected > FRAMES_MAX){
-		printf("Invalid frame count  \n");
+		printf("ERROR: Invalid frame count  \n");
 		return INVALID_FRAME_CNT;
 	}	
 	if(buff[RES_RI] != server_config_obj.raida_id){
-		printf("Invalid Raida id \n");
+		printf("ERROR: Invalid Raida id \n");
 		return WRONG_RAIDA;
 	}
 	if((buff[RES_EC] != send_req_buffer[REQ_EC]) || (buff[RES_EC+1] != send_req_buffer[REQ_EC+1])) {
 		printf("Error: EC bytes not match\n");
+		return FAIL;
 	}
 	return NO_ERR_CODE;
 }
@@ -218,13 +219,15 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 
 void Call_Report_Changes_Service() {
 
-	printf("-------Call Report Changes Service----------\n");
+	printf("-->SERVICES: -------CALL REPORT CHANGES SERVICE---------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
 	int index_req = prepare_send_req_header(command_code);
 
 	//Assign timestamp bytes in the buffer
 	// YY, MM, DD, HH, MM, SS
+	printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+
     send_req_buffer[index_req + 0] = tm.year;
     send_req_buffer[index_req + 1] = tm.month;
     send_req_buffer[index_req + 2] = tm.day;
@@ -253,10 +256,12 @@ unsigned char Process_response_Report_Changes() {
 	unsigned char status_code;
 	int resp_header_min;
 
+	printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
+
 	packet_len = Receive_response();
 	status_code = recv_response[RES_SS];
 
-	printf("--------STATUS:");
+	printf("--STATUS:");
 
 	if(status_code == MIRROR_REPORT_RETURNED) {
 		printf("Returned Files need to be Synchronised\n");

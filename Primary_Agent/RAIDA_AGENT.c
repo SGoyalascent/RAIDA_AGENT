@@ -6,6 +6,7 @@
 
 char execpath[256], serverpath[256];
 char Agent_Mode[10];
+char keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 struct timestamp tm;
 
@@ -21,13 +22,13 @@ void WelcomeMsg() {
 //------------------------------------------------
 void get_execpath() {
     
-    strcpy(execpath, "/opt/Testing/");
-    printf("execpath: %s\n", execpath);
+    strcpy(execpath, "/opt/Testing");
+    printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
 // Get the current directory path starting from home dir
 //---------------------------------------------------------
-void getexepath()
+void getcurrentpath()
 {
   char buff[256];
   int count = readlink( "/proc/self/exe", buff, 256);
@@ -39,6 +40,7 @@ void getexepath()
 	i++;
   }	
   strncpy(serverpath,buff,slash_pos);
+  printf("Current_dir_path: %s\n", serverpath);
 }
 //----------------------------------------------------------
 //Loads raida no from raida_no.txt
@@ -51,7 +53,7 @@ int load_raida_no(){
 	strcpy(path,serverpath);
 	strcat(path,"/Data/raida_no.txt");
 	if ((fp_inp = fopen(path, "r")) == NULL) {
-		printf("raida_no.txt Cannot be opened , exiting \n");
+		printf("->Error: raida_no.txt Cannot be opened , exiting \n");
 		return 1;
 	}
 	while( ( ch = fgetc(fp_inp) ) != EOF ){
@@ -152,9 +154,49 @@ void Read_Agent_Configuration_Files() {
 }
 
 //-----------------------------------------------
-//READ KEYS.bin FILE
+//READ KEYS.bin FILE and store in the RAM
 //-----------------------------------------------
+void read_keys_file() {
+    
+    FILE *fp = NULL;
+    int size = 0, ch;
+    char path[500];
+    char buff[KEY_BYTES_CNT*KEYS_COUNT];
+    strcpy(path, execpath);
+    strcat(path, "/Keys/keys.bin");
+    if((fp = fopen(path, "rb")) == NULL) {
+        printf("->Error: Keys.bin file cannot be opened\n");
+        return;
+    }
+    while((ch = fgetc(fp)) != EOF) {
+        size++;
+    }
+    printf("Keys_file_size: %d\n", size);
+    if(size != KEY_BYTES_CNT*KEYS_COUNT) {
+        printf("Error: Keys file size does not match\n");
+        return;
+    }
+    fclose(fp);
 
+    fp = fopen(path, "rb");
+    if(fread(buff, 1, size, fp) < size) {
+        printf("Keys bytes missing\n");
+        return;
+    }
+    fclose(fp);
+    
+    int index = 0;
+    printf("KEYS: \n");
+    for(int i = 0;i < KEYS_COUNT;i++) {
+        memcpy(&keys_bytes[i][0], &buff[index], KEY_BYTES_CNT);
+        index += KEY_BYTES_CNT;
+        for(int j = 0; j < KEY_BYTES_CNT; j++) {
+            printf("%d ", keys_bytes[i][j]);
+        }
+        printf("\n");
+    }
+
+}
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
 //-----------------------------------------------
@@ -207,20 +249,27 @@ void get_latest_timestamp(char * path)
         //if directory
         else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0) {
             printf("dirname: %s  dirpath: %s\n", f_name, f_path);
-            show_dir_content(f_path);
+            get_latest_timestamp(f_path);
         }
     }
     closedir(d);
 }
+//--------------------------------------------------------
+//Can the RAIDA Agent contact the Mirror AGENT/Server?
+//--------------------------------------------------------
+//void echo_mirror_raida_server() {}
+
 
 int main() {
 
     printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
     WelcomeMsg();
+    getcurrentpath();
+    load_raida_no();
     get_execpath();
-    printf("-->MAIN: READ-Agent-Configuration-Files---\n");
+    printf("-->READ-Agent-Configuration-Files---\n");
     Read_Agent_Configuration_Files();
-    //Read_Keys();
+    read_keys_file();
 
     char *path;
     strcpy(path, execpath);
@@ -228,6 +277,10 @@ int main() {
     printf("-->MAIN: path: %s\n", path);
     printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
+
+    //echo_mirror_raida_server();
+
+
 
     /*
     int stat;
@@ -246,12 +299,10 @@ int main() {
     init_udp_socket();
 
     unsigned char status_code;
-    printf("-->MAIN: CALL-REPORT-CHANGES-SERVICE-----\n");
     Call_Report_Changes_Service();
-    printf("-->MAIN: Call Process-Response-Report-Changes---\n");
     status_code = Process_response_Report_Changes();
 
-    printf("-->MAIN: Report Changes---Status_Code: %s\n", status_code);
+    printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
     if(status_code == MIRROR_REPORT_RETURNED) {
         for() {
             printf("MAIN: CALL- GET-page-service\n");
