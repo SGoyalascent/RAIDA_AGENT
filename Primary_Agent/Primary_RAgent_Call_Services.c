@@ -3,10 +3,9 @@
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
 unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
-unsigned char recv_response[RESPONSE_HEADER_MAX], udp_buffer[UDP_BUFF_SIZE];
+unsigned char recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
 unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 unsigned int total_files_count = 0;
-time_t t1;
 
 
 //-----------------------------------------------------------
@@ -25,7 +24,7 @@ int init_udp_socket() {
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
-	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Primary port no.
+	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Mirror port no.
 
 /*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
@@ -114,11 +113,11 @@ int Receive_response() {
 				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
 				printf("n: %d\n", n);
 				curr_frame_no=1;
-				printf("--RECVD_FRAME NO: %d\n", curr_frame_no);
+				printf("RECVD_FRAME NO: %d\n", curr_frame_no);
 				state = STATE_START_RECVD;	
 			break;		
 			case STATE_START_RECVD:
-				printf("---RESPONSE RECEIVED ------------\n");
+				printf("--------Response Header Received---------\n");
 				status_code = validate_response_header(buffer,n);
 				if(status_code != NO_ERR_CODE){
 					printf("Error: Response Header not validated. Error_no: %s\n", status_code);			
@@ -198,17 +197,32 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 }
 
 //------------------------------------------------------------------------------------------
-//  Validate Response body 
+//  Validate Response body for Report Changes 
 //-----------------------------------------------------------------------------------------
 unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *resp_body,int *resp_header_min){
 	*resp_header_min = RESP_HEADER_MIN_LEN;
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
+	if(*resp_body == 0) {
+		printf("ERROR: Empty Response Body\n");
+		return 0;
+	}
 	if((*resp_body != 0) && (*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0)) {
 		printf("Error: Response body does not match. Invalid Packet length\n");
 		return 0;
 	}
+	return 1;
+}
+
+//------------------------------------------------------------------------------------------
+//  Validate Response body for GET PAGE Changes 
+//-----------------------------------------------------------------------------------------
+unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body,int *resp_header_min){
+	*resp_header_min = RESP_HEADER_MIN_LEN;
+	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
+
+	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
 	if(*resp_body == 0) {
 		printf("ERROR: Empty Response Body\n");
 		return 0;
@@ -217,12 +231,12 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 }
 
 //----------------------------------------------------------------------------------------
-//
+// CALL REPORT CHANGES SERVICE
 //----------------------------------------------------------------------------------------
 
 void Call_Report_Changes_Service() {
 
-	printf("-->SERVICES: -------CALL REPORT CHANGES SERVICE---------\n");
+	printf("-->SERVICES: -------CALL MIRROR REPORT CHANGES SERVICE---------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
 	int index_req = prepare_send_req_header(command_code);
@@ -262,11 +276,6 @@ unsigned char Process_response_Report_Changes() {
 	printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
 
 	packet_len = Receive_response();
-	if(packet_len == 0) {
-		printf("Error: Response received incorrectly. Request Again.\n");
-		return FAIL;
-	}
-
 	status_code = recv_response[RES_SS];
 	printf("STATUS: %d\n", status_code);
 
@@ -304,33 +313,31 @@ unsigned char Process_response_Report_Changes() {
 		}
 		printf("\n");
 	}
-
 	return status_code;
 }
 
-void Call_Mirror_Get_Page_Service() {
+void Call_Mirror_Get_Page_Service(unsigned int i) {
 
-	printf("------------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
+	printf("-->SERVICES: -----------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
 
 	unsigned char command_code = AGENT_GET_PAGE;
 	int index_req = prepare_send_req_header(command_code);
 
 	memcpy(&send_req_buffer[index_req], &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	memcpy(req_file_id, &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
+	index_req += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 
 	send_req_buffer[index_req+0] = 62;
 	send_req_buffer[index_req+1] = 62;
+	unsigned int len = index_req + CMD_END_BYTES_CNT;
 
-	unsigned int len = index_req + RAIDA_AGENT_FILE_ID_BYTES_CNT + CMD_END_BYTES_CNT;
-
-	printf("send_buffer:- ");
+	printf("req_buffer:- ");
     for(int i=0; i < len; i++) {
         printf("%d ", buffer[i] );
     }
     printf("\n");
 
 	Send_Request(len);
-
 }
 
 void Process_response_Get_Page() {
@@ -341,8 +348,7 @@ void Process_response_Get_Page() {
 	packet_len = Receive_response();
 	status_code = recv_response[RES_SS];
 
-	printf("--------STATUS:");
-
+	printf("STATUS: %d\n", status_code);
 	if(status_code == SUCCESS) {
 		printf("File Page returned\n");
 	}
@@ -355,6 +361,7 @@ void Process_response_Get_Page() {
 		return status_code;
 	}
 
+	validate_resp_body_get_page()
 	index = RESP_HEADER_MIN_LEN;
 
 	unsigned char recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];

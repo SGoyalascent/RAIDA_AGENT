@@ -22,7 +22,7 @@
 //------------------------------------------------------------------
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
-#define RESPONSE_HEADER_MAX 		65535
+#define RESPONSE_SIZE_MAX 		65535
 
 #define VER 255
 //-----------------------------------------------------------------
@@ -234,7 +234,15 @@ extern char execpath[256];
 extern char serverpath[256];
 extern char Agent_Mode[10];
 
-//-------
+//-------CALL SERVICES-------------------
+
+extern struct sockaddr_in servaddr, cliaddr;
+extern int sockfd;
+extern fd_set select_fds;  
+extern unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
+extern unsigned char recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
+extern unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
+extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
@@ -270,24 +278,13 @@ extern struct timestamp tm;
 
 
 //-------------------
-extern int sockfd;
 extern unsigned char response_flg;
-extern int32_t key_cnt;
-extern fd_set select_fds;                
+extern int32_t key_cnt;            
 extern struct timeval timeout;
-extern struct sockaddr_in servaddr, cliaddr;
 extern long time_stamp_before,time_stamp_after;
-extern unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
+extern unsigned char response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
 
-extern unsigned char udp_response[MAXLINE];
-extern time_t t1;
-extern unsigned int coin_id;
-extern unsigned int table_id;
-extern unsigned int serial_no;
-extern unsigned int index = RES_HS+HS_BYTES_CNT;
-extern unsigned int index_resp = 0;
-extern unsigned int frame_count = 0;
-extern unsigned int frame_no = 0;
+
 
 
 //------------------------------------------------------------------------

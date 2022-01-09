@@ -279,9 +279,6 @@ int main() {
     get_latest_timestamp(path);
 
     //echo_mirror_raida_server();
-
-
-
     /*
     int stat;
     if((stat = strcmp(Agent_Mode, "primary")) == 0){
@@ -301,12 +298,21 @@ int main() {
     unsigned char status_code;
     Call_Report_Changes_Service();
     status_code = Process_response_Report_Changes();
-
     printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
+    if(status_code == FAIL) {
+        printf("Again Call Report Changes Service\n");
+        Call_Report_Changes_Service();
+        status_code = Process_response_Report_Changes();
+        printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
+    }
+    if(status_code == RAIDA_AGENT_NO_CHANGES) {
+        printf("No need to Call GET Page service\n");
+    }
+    
     if(status_code == MIRROR_REPORT_RETURNED) {
-        for() {
+        for(unsigned int i = 0; i < total_files_count;i++) {
             printf("MAIN: CALL- GET-page-service\n");
-            Call_Mirror_Get_Page_Service();
+            Call_Mirror_Get_Page_Service(i);
             printf("MAIN: Process-Get-page\n");
             Process_response_Get_Page();
         }
