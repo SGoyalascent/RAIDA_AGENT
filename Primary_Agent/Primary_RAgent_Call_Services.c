@@ -6,6 +6,7 @@ unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
 unsigned char recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
 unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 unsigned int total_files_count = 0;
+union conversion byteObj;
 
 
 //-----------------------------------------------------------
@@ -155,7 +156,7 @@ int Receive_response() {
 			break;			
 			case STATE_END_RECVD:
 				if(recv_response[index-1] != RESP_END|| recv_response[index-2] != RESP_END){
-					printf("Error: Invalid end of Response packet  \n");
+					printf("Error: Invalid end of Response packet\n");
 					return 0;
 				}
 				else {
@@ -208,6 +209,11 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 		printf("ERROR: Empty Response Body\n");
 		return 0;
 	}
+	if(recv_response[packet_len-1] != RESP_END|| recv_response[packet_len-2] != RESP_END){
+		printf("Error: Invalid end of Response packet\n");
+		printf("resp[1] = %d resp[0] = %d\n",recv_response[packet_len-1], recv_response[packet_len-2]);
+		return 0;
+	}
 	if((*resp_body != 0) && (*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0)) {
 		printf("Error: Response body does not match. Invalid Packet length\n");
 		return 0;
@@ -225,6 +231,11 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
 	if(*resp_body == 0) {
 		printf("ERROR: Empty Response Body\n");
+		return 0;
+	}
+	if(recv_response[packet_len-1] != RESP_END|| recv_response[packet_len-2] != RESP_END){
+		printf("Error: Invalid end of Response packet\n");
+		printf("resp[1] = %d resp[0] = %d\n",recv_response[packet_len-1], recv_response[packet_len-2]);
 		return 0;
 	}
 	return 1;
@@ -292,7 +303,7 @@ unsigned char Process_response_Report_Changes() {
 		printf("No Changes. All Files already Synchronized\n");
 		return RAIDA_AGENT_NO_CHANGES;
 	}
-	
+	printf("Reuested File names returned\n");
 	if(validate_resp_body_report_changes(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
 		return FAIL;
 	}
@@ -342,28 +353,31 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 
 void Process_response_Get_Page() {
 
-	unsigned int packet_len = 0, index = 0, size = 0;
+	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
 	unsigned char status_code;
+	int resp_header_min;
 
 	packet_len = Receive_response();
 	status_code = recv_response[RES_SS];
 
 	printf("STATUS: %d\n", status_code);
+	/*
 	if(status_code == SUCCESS) {
 		printf("File Page returned\n");
-	}
-	else if(status_code == MIRROR_REQUESTED_FILE_NOT_EXIST) {
-		printf("Requested file does not exist\n");
-		return status_code;
 	}
 	else {
 		printf("status_code: %s. Error: Status code does not match\n");
 		return status_code;
+	} */
+	if(status_code == MIRROR_REQUESTED_FILE_NOT_EXIST) {
+		printf("Requested file does not exist\n");
+		return status_code;
 	}
-
-	validate_resp_body_get_page()
-	index = RESP_HEADER_MIN_LEN;
-
+	printf("File Page returned\n");
+	if(validate_resp_body_get_page(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
+		return FAIL;
+	}
+	index = resp_header_min;
 	unsigned char recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 
 	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
@@ -371,9 +385,91 @@ void Process_response_Get_Page() {
 
 	if(memcmp(recv_file_id, req_file_id, RAIDA_AGENT_FILE_ID_BYTES_CNT) != 0) {
 		printf("Error: Requested File and Received File not same\n");
-		status_code = FAIL;
-		return status_code;
+		return FAIL;
 	}
 
+	unsigned int coin_id, table_id, serial_no;
+
+	byteObj.byte2[0] = recv_file_id[1];  //LSB
+	byteObj.byte2[1] = recv_file_id[0];   //MSB
+	coin_id = byteObj.val;
+
+	table_id = recv_file_id[2];
+
+	byteObj.byte4[0] = recv_file_id[6];   //LSB
+	byteObj.byte4[1] = recv_file_id[5];
+	byteObj.byte4[2] = recv_file_id[4];
+	byteObj.byte4[3] = recv_file_id[3];   //MSB
+	serial_no = byteObj.val;
+
+	printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+
+	char id[20];
+	char filepath[500];
+	strcpy(filepath, execpath);
+
+	if((coin_id == 254) && (table_id == 0)) {
+		strcat(filepath, "/Owners/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	if((coin_id == 255) && (table_id == 0)) {
+		strcat(filepath, "/my_id_coins/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+
+	sprintf(id, "%d", coin_id);
+	strcat(filepath, "/coin_");
+	strcat(filepath, id);
+
+	if(table_id == 1) {
+        strcat(filepath, "/ANs/");  
+    }
+    else if(table_id == 2) {
+        strcat(filepath, "/Statements/");
+    }
+    else if(table_id == 3) {
+        strcat(filepath, "/Loss_Coin_Report/");
+    }
+    else if(table_id == 4) {
+        strcat(filepath, "/Email_Recover/");
+    }
+
+	sprintf(id, "%d", serial_no);
+	strcat(filepath, id);
+	strcat(filepath, ".bin");
+
+	printf("File_path: %s\n", filepath);
 	
+	Update_File_Contents();
+}
+
+void Update_File_Contents() {
+
+    FILE *fp_inp = NULL;
+    int ch, size = 0;
+	//char file_path[500];
+
+    fp_inp = fopen(file_path, "rb");
+    if(fb_inp == NULL) {
+        printf("%d.bin cannot be opened, exiting\n", serial_no);
+        return;
+    }
+
+    while((ch = fgetc(fp_inp) ) != EOF) {
+        size++;
+    }
+	printf("file_size: %d\n", size);
+    fclose(fp_inp);
+
+    fp_inp = fopen(file_path, "rb");
+    if(fread(&response[RESP_BUFF_MIN_CNT], 1, size, fp_inp) < size) {
+        printf("Contents missing in the %d.bin file\n", serial_no);
+        return;
+    }
+    fclose(fp_inp);
+
 }

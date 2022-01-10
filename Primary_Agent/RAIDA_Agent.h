@@ -282,7 +282,7 @@ extern unsigned char response_flg;
 extern int32_t key_cnt;            
 extern struct timeval timeout;
 extern long time_stamp_before,time_stamp_after;
-extern unsigned char response[RESPONSE_HEADER_MAX],EN_CODES[EN_CODES_MAX];
+extern unsigned char response[RESPONSE_SIZE_MAX],EN_CODES[EN_CODES_MAX];
 
 
 
