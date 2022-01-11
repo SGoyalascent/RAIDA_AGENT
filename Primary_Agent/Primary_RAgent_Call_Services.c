@@ -353,7 +353,7 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 
 void Process_response_Get_Page() {
 
-	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
+	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
 	unsigned char status_code;
 	int resp_header_min;
 
@@ -388,6 +388,7 @@ void Process_response_Get_Page() {
 		return FAIL;
 	}
 
+	file_size = resp_body_without_end_bytes - RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	unsigned int coin_id, table_id, serial_no;
 
 	byteObj.byte2[0] = recv_file_id[1];  //LSB
@@ -444,30 +445,23 @@ void Process_response_Get_Page() {
 
 	printf("File_path: %s\n", filepath);
 	
-	Update_File_Contents();
+	Update_File_Contents(filepath, file_size, index);
 }
 
-void Update_File_Contents() {
+void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int index) {
 
     FILE *fp_inp = NULL;
-    int ch, size = 0;
-	//char file_path[500];
+    //har file_path[500];
+	//strcpy(file_path, filepath);
 
-    fp_inp = fopen(file_path, "rb");
-    if(fb_inp == NULL) {
-        printf("%d.bin cannot be opened, exiting\n", serial_no);
+    fp_inp = fopen(filepath, "wb");
+    if(fp_inp == NULL) {
+        printf("File cannot be opened, exiting\n");
         return;
     }
 
-    while((ch = fgetc(fp_inp) ) != EOF) {
-        size++;
-    }
-	printf("file_size: %d\n", size);
-    fclose(fp_inp);
-
-    fp_inp = fopen(file_path, "rb");
-    if(fread(&response[RESP_BUFF_MIN_CNT], 1, size, fp_inp) < size) {
-        printf("Contents missing in the %d.bin file\n", serial_no);
+    if(fwrite(&response[index], 1, file_size, fp_inp) < file_size) {
+        printf("Contents missing in the file\n");
         return;
     }
     fclose(fp_inp);
