@@ -1,6 +1,6 @@
 #include "RAIDA_Agent.h"
 
-unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_HEADER_MAX], udp_response[MAXLINE];
+unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
 unsigned int index_resp = RES_HS + HS_BYTES_CNT;
 int total_frames = 0
 char execpath[256];

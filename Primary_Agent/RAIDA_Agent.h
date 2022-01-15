@@ -287,10 +287,26 @@ extern unsigned char response[RESPONSE_SIZE_MAX],EN_CODES[EN_CODES_MAX];
 
 
 
-//------------------------------------------------------------------------
+//---------------MAIN--------------------------------------
 void get_execpath();
 void WelcomeMsg();
 void Read_Agent_Configuration_Files();
 void get_latest_timestamp(char *);
+
+//---------------CALL SERVICES-----------------------------
+
+
+//------------------REPORT CHANGES-------------------------
+
+void prepare_resp_header(unsigned char status_code)
+
+
+
+
+
+
+
+
+//---------------GET PAGE---------------------------------
 
 #endif

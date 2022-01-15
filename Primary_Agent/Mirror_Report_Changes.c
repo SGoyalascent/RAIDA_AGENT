@@ -5,9 +5,9 @@
 #include "RAIDA_Agent.h"
 
 struct sockaddr_in servaddr, cliaddr;
-int sockfd = 0, total_frames = 0, root_path_len = 0;
+int sockfd = 0, total_frames = 1, root_path_len = 0;
 time_t t1;
-unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_HEADER_MAX], udp_response[MAXLINE];
+unsigned char udp_buffer[UDP_BUFF_SIZE], response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
 unsigned int coin_id, table_id, serial_no;
 unsigned int index_resp = RES_HS + HS_BYTES_CNT;
 char execpath[256];
