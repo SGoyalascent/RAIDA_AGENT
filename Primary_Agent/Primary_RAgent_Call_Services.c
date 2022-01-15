@@ -182,7 +182,7 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 	frames_expected = buff[RES_RE+1];
 	frames_expected|=(((uint16_t)buff[RES_RE])<<8);
 	printf("frames_expected: %d\n", frames_expected);
-	if(frames_expected <=0  || frames_expected > FRAMES_MAX){
+	if(frames_expected < 0  || frames_expected > FRAMES_MAX){
 		printf("ERROR: Invalid frame count  \n");
 		return INVALID_FRAME_CNT;
 	}	

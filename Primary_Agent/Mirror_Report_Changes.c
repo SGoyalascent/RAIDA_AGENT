@@ -114,10 +114,16 @@ int prepare_resp_body(int index) {
     return (index+7);
 }
 
-void get_Files_path() {
-
-
-
+//------------------------------------------------------------------------------------------
+//  Validate coins and request body and return number of coins 
+//-----------------------------------------------------------------------------------------
+unsigned char validate_request_body_general(unsigned int packet_len,unsigned int req_body,int *req_header_min){
+	*req_header_min = REQ_HEAD_MIN_LEN;
+	if(packet_len != (*req_header_min) + req_body){
+		send_err_resp_header(INVALID_PACKET_LEN);
+		return 0;
+	}
+	return 1;
 }
 
 void get_ModifiedFiles(char * path)
