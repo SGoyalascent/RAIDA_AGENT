@@ -236,7 +236,7 @@ void get_latest_timestamp(char * path)
                 t1 = t2;
                 printf("datestring: %s  ", datestring);
 
-                tm.year = dt->tm_year ;  //year from 1900 ==>  2021 == 121
+                tm.year = dt->tm_year;  //year from 1900 ==>  2021 == 121
                 tm.month = dt->tm_mon;  //month in 0 - 11 range  ==> 12(dec) == 11
                 tm.day = dt->tm_mday;
                 tm.hour = dt->tm_hour;

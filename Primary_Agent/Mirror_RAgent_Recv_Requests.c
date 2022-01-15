@@ -250,10 +250,8 @@ void get_ModifiedFiles(char * path)
     struct dirent *dir; 
     struct stat statbuf;
     struct tm *dt;
-    
-	//char root_path[256] = "/opt/Testing/Data";
-    //root_path_len = strlen(root_path);
 
+	int root_path_len = strlen(execpath);
     DIR *d = opendir(path); 
     if(d == NULL) {
         return;  
@@ -269,9 +267,8 @@ void get_ModifiedFiles(char * path)
 			printf("filename: %s  filepath: %s\n", df_name, df_path);
 
             time_t t2;
-            char datestring[256];
+            char datestring[256], sub_path[500];
             double time_dif;
-            char sub_path[500];
 
             if(stat(df_path, &statbuf) == -1) {
                 fprintf(stderr,"Error: %s\n", strerror(errno));
@@ -363,6 +360,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + TIMESTAMP_BYTES_CNT, req_header_min, index=0;
 	unsigned char recv_buffer[TIMESTAMP_BYTES_CNT];
 
+	printf("------------REPORT CHANGES SERVICE-------------------\n");
 	if(validate_request_body_general(packet_len,req_body_bytes,&req_header_min)==0){
 		send_err_resp_header(EMPTY_REQ_BODY);
 		return;
@@ -392,10 +390,12 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	else {
 		strftime(date, sizeof(date), "%c", recv_dt);
 		printf("date: %s\n", date);
+		printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", recv_dt->tm_mday,recv_dt->tm_mon+1,recv_dt->tm_year+1900, 
+                                                                                recv_dt->tm_hour,recv_dt->tm_min, recv_dt->tm_sec );
 	}
 
-	char *root_path = "/opt/Testing/Data";
-    root_path_len = strlen(root_path);
+	char *root_path;
+	strcpy(root_path, execpath);
 
 	get_ModifiedFiles(root_path);
 
