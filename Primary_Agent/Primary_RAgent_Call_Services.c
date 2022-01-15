@@ -1,9 +1,11 @@
+//Call  Mirror RAIDA Services
+//Send Requests to Mirror RIADA and receive Responses from Mirror RIADA
+
 #include "RAIDA_Agent.h"
 
 struct sockaddr_in servaddr, cliaddr;
 int sockfd = 0;
-unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
-unsigned char recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
+unsigned char send_req_buffer[MAXLINE], recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
 unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 unsigned int total_files_count = 0;
 union conversion byteObj;
@@ -19,9 +21,7 @@ int init_udp_socket() {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
 	}
-	memset(&servaddr, 0, sizeof(servaddr));
-	//memset(&cliaddr, 0, sizeof(cliaddr));
-	
+	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
@@ -45,60 +45,8 @@ void set_time_out(unsigned char secs){
 	timeout.tv_usec = 0;
 }
 
-//-------------------------------------------------------
-//Request Header to Call Mirror Services
-//---------------------------------------------------------
-int prepare_send_req_header(unsigned char command_code) {
-    
-	int index_req = 0;
-
-    request_header[REQ_CL] = 0;
-    request_header[REQ_SP] = 0;
-    request_header[REQ_RI] = server_config_obj.raida_id;    // raida_no.
-    request_header[REQ_SH] = 0;
-    request_header[REQ_CM] = 0;
-    request_header[REQ_CM+1] = command_code;   //command code
-    request_header[REQ_VE] = 0;
-    request_header[REQ_CI] = 0;
-    request_header[REQ_CI+1] = 0;
-    request_header[REQ_RE] = 0;
-    request_header[REQ_RE+1] = 0;
-    request_header[REQ_RE+2] = 0;
-    request_header[REQ_EC] = 22;                 //??Test again separetly??//
-    request_header[REQ_EC+1] = 22;    
-    request_header[REQ_FC] = 0;
-    request_header[REQ_FC+1] = 1;    // udp packets sent
-    request_header[REQ_EN] = 0;           //encryption code
-    request_header[REQ_ID] = 0;
-    request_header[REQ_ID+1] = 0;
-    request_header[REQ_SN] = 0;
-    request_header[REQ_SN+1] = 0;
-    request_header[REQ_SN+2] = 0;
-
-    memcpy(send_req_buffer, request_header, REQ_HEAD_MIN_LEN);
-    index_req += REQ_HEAD_MIN_LEN;
-
-    // Add challenge(CH) in the Request Body/buffer
-    for(int i=0; i < CH_BYTES_CNT; i++) {
-        send_req_buffer[index_req + i] = i+1;
-    }
-    index_req += CH_BYTES_CNT;
-
-	return index_req;
-}
-
-//--------------------------------------------------------
-//Send Request to Mirror Raida
-//---------------------------------------------------------
-void Send_Request(unsigned int size) {
-	char * myfifo = "/tmp/myfifo";
-	sendto(sockfd, (const char *)send_req_buffer, size,
-	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-
-}
-
 //-----------------------------------------------------------
-//Receive Response from Mirror Raida
+//Receive Response from Raida Agent
 //-----------------------------------------------------------
 int Receive_response() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
@@ -182,7 +130,7 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 	frames_expected = buff[RES_RE+1];
 	frames_expected|=(((uint16_t)buff[RES_RE])<<8);
 	printf("frames_expected: %d\n", frames_expected);
-	if(frames_expected < 0  || frames_expected > FRAMES_MAX){
+	if(frames_expected <= 0  || frames_expected > FRAMES_MAX){
 		printf("ERROR: Invalid frame count  \n");
 		return INVALID_FRAME_CNT;
 	}	
@@ -220,7 +168,6 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 	}
 	return 1;
 }
-
 //------------------------------------------------------------------------------------------
 //  Validate Response body for GET PAGE Changes 
 //-----------------------------------------------------------------------------------------
@@ -240,17 +187,68 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	}
 	return 1;
 }
+//--------------------------------------------------------
+//Send Request to Mirror Raida
+//---------------------------------------------------------
+void Send_Request(unsigned int size) {
+	char * myfifo = "/tmp/myfifo";
+	sendto(sockfd, (const char *)send_req_buffer, size,
+	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+
+}
+//-------------------------------------------------------
+//Request Header to Call Mirror Services
+//---------------------------------------------------------
+int prepare_send_req_header(unsigned char command_code) {
+    
+	int index_req = 0;
+	unsigned char request_header[REQ_HEAD_MIN_LEN];
+
+    request_header[REQ_CL] = 0;
+    request_header[REQ_SP] = 0;
+    request_header[REQ_RI] = server_config_obj.raida_id;    // raida_no.
+    request_header[REQ_SH] = 0;
+    request_header[REQ_CM] = 0;
+    request_header[REQ_CM+1] = command_code;   //command code
+    request_header[REQ_VE] = 0;
+    request_header[REQ_CI] = 0;
+    request_header[REQ_CI+1] = 0;
+    request_header[REQ_RE] = 0;
+    request_header[REQ_RE+1] = 0;
+    request_header[REQ_RE+2] = 0;
+    request_header[REQ_EC] = 22;                 //??Test again separetly??//
+    request_header[REQ_EC+1] = 22;    
+    request_header[REQ_FC] = 0;
+    request_header[REQ_FC+1] = 1;    // udp packets sent
+    request_header[REQ_EN] = 0;           //encryption code
+    request_header[REQ_ID] = 0;
+    request_header[REQ_ID+1] = 0;
+    request_header[REQ_SN] = 0;
+    request_header[REQ_SN+1] = 0;
+    request_header[REQ_SN+2] = 0;
+
+    memcpy(send_req_buffer, request_header, REQ_HEAD_MIN_LEN);
+    index_req += REQ_HEAD_MIN_LEN;
+
+    // Add challenge(CH) in the Request Body/buffer
+    for(int i=0; i < CH_BYTES_CNT; i++) {
+        send_req_buffer[index_req + i] = i+1;
+    }
+    index_req += CH_BYTES_CNT;
+
+	return index_req;
+}
 
 //----------------------------------------------------------------------------------------
-// CALL REPORT CHANGES SERVICE
+// CALL MIRROR REPORT CHANGES SERVICE || SEND REQUEST TO MIRROR RAIDA SERVICE
 //----------------------------------------------------------------------------------------
-
 void Call_Report_Changes_Service() {
 
 	printf("-->SERVICES: -------CALL MIRROR REPORT CHANGES SERVICE---------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
-	int index_req = prepare_send_req_header(command_code);
+	int index_req, len;
+	index_req = prepare_send_req_header(command_code);
 
 	//Assign timestamp bytes in the buffer
 	// YY, MM, DD, HH, MM, SS
@@ -267,8 +265,7 @@ void Call_Report_Changes_Service() {
     send_req_buffer[index_req+TIMESTAMP_BYTES_CNT+0] = 62;
     send_req_buffer[index_req+TIMESTAMP_BYTES_CNT+1] = 62;
 
-    unsigned int len = index_req + TIMESTAMP_BYTES_CNT + CMD_END_BYTES_CNT;
-
+    len = index_req + TIMESTAMP_BYTES_CNT + CMD_END_BYTES_CNT;
     printf("send_buffer:- ");
     for(int i=0; i < len; i++) {
         printf("%d ", buffer[i] );
@@ -277,7 +274,9 @@ void Call_Report_Changes_Service() {
 
 	Send_Request(len);
 }
-
+//--------------------------------------------------------
+//
+//--------------------------------------------------------
 unsigned char Process_response_Report_Changes() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
@@ -326,7 +325,9 @@ unsigned char Process_response_Report_Changes() {
 	}
 	return status_code;
 }
-
+//--------------------------------------------------------
+//
+//--------------------------------------------------------
 void Call_Mirror_Get_Page_Service(unsigned int i) {
 
 	printf("-->SERVICES: -----------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
@@ -350,7 +351,9 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 
 	Send_Request(len);
 }
-
+//-----------------------------------------------------------------
+//
+//-----------------------------------------------------------------
 void Process_response_Get_Page() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
@@ -447,7 +450,9 @@ void Process_response_Get_Page() {
 	
 	Update_File_Contents(filepath, file_size, index);
 }
-
+//-------------------------------------------------------------------
+//
+//------------------------------------------------------------------
 void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int index) {
 
     FILE *fp_inp = NULL;

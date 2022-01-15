@@ -265,7 +265,6 @@ void get_ModifiedFiles(char * path)
         if(dir->d_type == DT_REG) {
             
 			printf("filename: %s  filepath: %s\n", df_name, df_path);
-
             time_t t2;
             char datestring[256], sub_path[500];
             double time_dif;
@@ -274,7 +273,6 @@ void get_ModifiedFiles(char * path)
                 fprintf(stderr,"Error: %s\n", strerror(errno));
                 continue;
             }
-
             strcpy(sub_path, &df_path[root_path_len+1]);
             printf("sub_path: %s\n", sub_path);
 
@@ -285,7 +283,7 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            //printf("datestring: %s\n", datestring);
+            printf("datestring: %s\n", datestring);
             printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
                                                                                 dt->tm_hour,dt->tm_min, dt->tm_sec );
         

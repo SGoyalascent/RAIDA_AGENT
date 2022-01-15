@@ -4,12 +4,10 @@
 
 #include "RAIDA_Agent.h"
 
-char execpath[256], serverpath[256];
-char Agent_Mode[10];
-char keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 struct timestamp tm;
-
+time_t t1 = 0;
 
 //-----------------------------------------------
 // Welcome Message
@@ -71,7 +69,6 @@ int load_raida_no(){
 	}else{
 		server_config_obj.raida_id=buff[0]-48;
 	}
-
     server_config_obj.bytes_per_frame = 1024;
 
 	printf("Raida Id  :-%d Bytes_per_frame: %d\n", server_config_obj.raida_id, server_config_obj.bytes_per_frame);
@@ -89,7 +86,7 @@ void Read_Agent_Configuration_Files() {
     struct dirent *dir; 
     DIR *d = opendir(path); 
     if(d == NULL) {
-        printf("Error. Can't find directory path\n");  
+        printf("Error: Can't find directory path\n");  
     }
     int i=0;
     while ((dir = readdir(d)) != NULL) 
@@ -99,6 +96,7 @@ void Read_Agent_Configuration_Files() {
 			char f_path[500], f_name[50];
             strcpy(f_name, dir->d_name);
             strcpy(f_path, path);
+            strcat(f_path, "/");
             strcat(f_path, f_name);
             printf("filename: %s  filepath: %s\n", f_name, f_path);
 
@@ -108,7 +106,6 @@ void Read_Agent_Configuration_Files() {
             strcpy(name, dir->d_name);
             token = strtok(name, ".");
             while(token != NULL) {
-
                 strcpy(token1, token);
                 token = strtok(NULL, ".");
             }
@@ -146,9 +143,7 @@ void Read_Agent_Configuration_Files() {
                     printf("WITNESS-RAIDA.  Ip_address: %s Port: %d\n", Witness_agent_config.Ip_address, Witness_agent_config.port_number);
                 }
             } 
-
-        }	
-			
+        }		
     }
     closedir(d);
 }
@@ -206,7 +201,7 @@ void get_latest_timestamp(char * path)
     struct stat statbuf;
     struct tm *dt;
     char datestring[256];
-    time_t t1 = 0, t2;
+    time_t t2;
     double time_dif;
     DIR *d = opendir(path); 
     if(d == NULL) {
@@ -226,7 +221,7 @@ void get_latest_timestamp(char * path)
         if((statbuf.st_mode & S_IFMT) == S_IFREG) {
             printf("filename: %s  filepath: %s\n", f_name, f_path);
             dt = gmtime(&statbuf.st_mtime);
-            t2 = statbuf.st_mtime;
+            t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
             printf("datestring: %s\n", datestring);
 
@@ -234,7 +229,6 @@ void get_latest_timestamp(char * path)
             printf("time_diff: %g\n", time_dif);
             if(time_dif > 0) {
                 t1 = t2;
-                printf("datestring: %s  ", datestring);
 
                 tm.year = dt->tm_year;  //year from 1900 ==>  2021 == 121
                 tm.month = dt->tm_mon;  //month in 0 - 11 range  ==> 12(dec) == 11
@@ -243,22 +237,16 @@ void get_latest_timestamp(char * path)
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
                 printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
-                //printf("Last Modified Time2:- %d-%d-%d  %d:%d:%d\n",dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, dt->tm_hour,dt->tm_min, dt->tm_sec);
             }
         }
         //if directory
-        else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0) {
+        else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && (strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0)) {
             printf("dirname: %s  dirpath: %s\n", f_name, f_path);
             get_latest_timestamp(f_path);
         }
     }
     closedir(d);
 }
-//--------------------------------------------------------
-//Can the RAIDA Agent contact the Mirror AGENT/Server?
-//--------------------------------------------------------
-//void echo_mirror_raida_server() {}
-
 
 int main() {
 
@@ -273,7 +261,7 @@ int main() {
 
     char *path;
     strcpy(path, execpath);
-    strcat(path, "Data");
+    strcat(path, "/Data");
     printf("-->MAIN: path: %s\n", path);
     printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);

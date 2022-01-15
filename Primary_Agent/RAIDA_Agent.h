@@ -221,18 +221,16 @@
 #define AGENT_MIRROR                2
 #define AGENT_WITNESS               3
 
-#define SN_SIZE  14
+#define SN_SIZE                     14
 #define FILES_COUNT_MAX           10000
 #define KEYS_COUNT                10000
 
 
 
 
-//------MAIN----------------
-
-extern char execpath[256];
-extern char serverpath[256];
-extern char Agent_Mode[10];
+//------MAIN--------------------------
+extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+extern time_t t1;
 
 //-------CALL SERVICES-------------------
 
@@ -253,7 +251,6 @@ extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_ag
 
 struct server_config {
 	unsigned char raida_id;
-	//unsigned int port_number;
 	unsigned int bytes_per_frame;
 };
 extern struct server_config server_config_obj;
