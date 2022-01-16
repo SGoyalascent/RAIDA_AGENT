@@ -65,7 +65,7 @@ int Receive_response() {
     state = STATE_START_RECVD;	
     status_code = validate_response_header(buffer,n);
     if(status_code != NO_ERR_CODE){
-        printf("Error: Response Header not validated. Error_no: %s\n", status_code);			
+        printf("Error: Response Header not validated. Error_no: %d\n", status_code);			
         return 0;
     }
     memcpy(recv_response,buffer,n);
@@ -355,7 +355,7 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 //-----------------------------------------------------------------
 //
 //-----------------------------------------------------------------
-void Process_response_Get_Page() {
+unsigned char Process_response_Get_Page() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
 	unsigned char status_code;
@@ -451,6 +451,8 @@ void Process_response_Get_Page() {
 	printf("File_path: %s\n", filepath);
 	
 	Update_File_Contents(filepath, file_size, index);
+
+	return status_code;
 }
 //-------------------------------------------------------------------
 //
