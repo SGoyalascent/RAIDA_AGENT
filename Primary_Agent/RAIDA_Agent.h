@@ -224,6 +224,7 @@
 #define SN_SIZE                     14
 #define FILES_COUNT_MAX           10000
 #define KEYS_COUNT                10000
+#define AGENT_FRAMES_MAX           66
 
 
 
@@ -234,11 +235,11 @@ extern time_t t1;
 
 //-------CALL SERVICES-------------------
 
-extern struct sockaddr_in servaddr, cliaddr;
+extern struct sockaddr_in servaddr;
 extern int sockfd;
 extern fd_set select_fds;  
-extern unsigned char send_req_buffer[MAXLINE], request_header[REQ_HEAD_MIN_LEN];
-extern unsigned char recv_response[RESPONSE_SIZE_MAX], udp_buffer[UDP_BUFF_SIZE];
+extern struct timeval timeout;
+extern unsigned char send_req_buffer[MAXLINE], recv_response[RESPONSE_SIZE_MAX];
 extern unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
 extern unsigned int total_files_count;
 
@@ -277,7 +278,6 @@ extern struct timestamp tm;
 //-------------------
 extern unsigned char response_flg;
 extern int32_t key_cnt;            
-extern struct timeval timeout;
 extern long time_stamp_before,time_stamp_after;
 extern unsigned char response[RESPONSE_SIZE_MAX],EN_CODES[EN_CODES_MAX];
 
