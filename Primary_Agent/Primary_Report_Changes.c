@@ -126,6 +126,23 @@ unsigned char validate_request_body_general(unsigned int packet_len,unsigned int
 	return 1;
 }
 
+/* //Check if a file exists
+bool fileexists(const std::string& file) {
+    struct stat buf;
+    return (stat(file.c_str(), &buf) == 0);
+}
+int main() {
+    if(fileexists() == false) {
+        std::cerr <<doesn't exist<< endl;
+    }
+}
+//----------------
+#include <fstream>
+bool check(const char* filename) {
+    ifstream infile(filename);
+    return infile.good();
+}
+*/
 void get_ModifiedFiles(char * path)
 {
     struct dirent *dir; 
