@@ -7,8 +7,8 @@ struct sockaddr_in servaddr, cliaddr;
 long time_stamp_before,time_stamp_after;
 unsigned char free_thread_running_flg;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
-unsigned int index_resp = RES_HS + HS_BYTES_CNT;
-int total_frames = 0
+unsigned int index_resp = RESP_HEADER_MIN_LEN;
+
 char execpath[256], file_path[500];
 time_t t1;
 
@@ -233,7 +233,7 @@ void Send_Response(unsigned int size){
 //------------------------------------------------------------------
 //PREPARE RESPONSE HEADER
 //----------------------------------------------------------------
-void prepare_resp_header(unsigned char status_code){
+void prepare_resp_header(unsigned char status_code, int total_frames){
 	unsigned char ex_time;
 	time_stamp_after = get_time_cs();
 	if((time_stamp_after-time_stamp_before) > 255){
@@ -257,63 +257,56 @@ void prepare_resp_header(unsigned char status_code){
  
 }   
 //---------------------------------------------------------------
-//PREPARE UDP RESPONSE BODY FOR REPORT CHANGES SERVICE
+//PREPARE UDP RESPONSE BODY
 //--------------------------------------------------------------
-void prepare_udp_resp_body() {
+void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_code_2) {
 
-    unsigned char status_code;
-    unsigned int size = 0;
+    int size = 0, frames = 1, total_frames = 1;
+	unsigned int current_length, index = 0;
+
+	response[index_resp+0] = 0x3E;
+    response[index_resp+1] = 0x3E;
     
-    if(index_resp == RESP_BUFF_MIN_CNT) {
-		status_code = RAIDA_AGENT_NO_CHANGES;  //MIRROR_REQUESTED_FILE_NOT_EXIST
-        total_frames = 0;
-        prepare_resp_header(status_code);
+    if(index_resp == RESP_HEADER_MIN_LEN) {
+		index_resp += RESP_BODY_END_BYTES;
+        prepare_resp_header(status_code_1, total_frames);
         memcpy(udp_response, response, index_resp);
-		size = RES_HS + HS_BYTES_CNT;
-		Send_Response_toPrimaryAgent(size);
+		size = index_resp;
+		Send_Response(size);
 		return;
 	}
     
-    response[index_resp+0] = 0x3E;
-    response[index_resp+1] = 0x3E;
-
-    int resp_length = index_resp + RESP_BODY_END_BYTES;
-    unsigned int current_length = resp_length;
-    printf("current_length: %u ", current_length);
-
-    total_frames = (resp_length/MAXLINE) + 1;
-    if((resp_length % MAXLINE) == 0) {
+    current_length = index_resp + RESP_BODY_END_BYTES;
+    total_frames = (current_length/MAXLINE) + 1;
+    if((current_length % MAXLINE) == 0) {
         total_frames = total_frames - 1;
     }
-    printf("resp_length: %d  current_length: %u total_frames: %d\n", resp_length, current_length, total_frames);
+    printf("current_length: %d total_frames: %d\n", current_length, total_frames);
 
-    int frames = 0, index = 0;
-    status_code = MIRROR_REPORT_RETURNED;
-    prepare_resp_header(status_code);
-    while(frames < total_frames) {
-        
-        frames++;
-        
+    prepare_resp_header(status_code_2, total_frames);
+    while(frames <= total_frames) {
+
         if(current_length <= MAXLINE) {
             memcpy(udp_response, &response[index], current_length);
             index += current_length;
             size = current_length;
-            Send_Response_toPrimaryAgent(size);
+            Send_Response(size);
         }
         else {
             memcpy(udp_response, &response[index], MAXLINE);
             index += MAXLINE;
             size = MAXLINE;
             current_length = current_length - MAXLINE;
-            Send_Response_toPrimaryAgent(size);
+            Send_Response(size);
         }
-        printf("current_length: %u frames: %d ", current_length, frames);
+        printf("current_length: %u frame_no: %d ", current_length, frames);
+		frames++;
     }
 }
 //---------------------------------------------------------------
 //PREPARRE RESPONSE FOR REPORT CHANGES SERVICE
 //--------------------------------------------------------------
-int prepare_resp_body(int index) {
+int prepare_resp_body(int index, int coin_id, int table_id, unsigned int serial_no ) {
     
     byteObj.val32 = coin_id;
     response[index+0] = byteObj.byte2[1]; //MSB
@@ -321,7 +314,7 @@ int prepare_resp_body(int index) {
     
     response[index+2] = table_id;
 
-    byteObj.val32 = serial_no;
+    byteObj.val = serial_no;
     response[index+3] = byteObj.byte4[3]; // msb
     response[index+4] = byteObj.byte4[2];
     response[index+5] = byteObj.byte4[1];
@@ -382,9 +375,10 @@ void get_ModifiedFiles(char * path)
             }
             printf("File Modified. Need to be Syncronized.\n");
             
-            char coin[20];  //coin_1234
-            char table[20];  //Statements
+            char coin[20], table[20];  //coin_1234         //Statements
             unsigned char c_id[10];  //1234 from coin[]
+			int coin_id, table_id;
+            unsigned int serial_no; 
 
             char *token;
             token = strtok(sub_path, "/");
@@ -427,8 +421,7 @@ void get_ModifiedFiles(char * path)
             }
         
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
-
-			index_resp = prepare_resp_body(index_resp);
+			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
         }	
 			
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
@@ -483,10 +476,9 @@ void  execute_Report_Changes(unsigned int packet_len) {
 
 	char *root_path;
 	strcpy(root_path, execpath);
-
 	get_ModifiedFiles(root_path);
 
-	prepare_udp_resp_body();
+	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
 }
 
 void execute_Mirror_Get_Page(unsigned int packet_len) {
