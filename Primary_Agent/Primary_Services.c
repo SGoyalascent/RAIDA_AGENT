@@ -5,10 +5,13 @@ fd_set select_fds;
 struct timeval timeout;
 struct sockaddr_in servaddr, cliaddr;
 long time_stamp_before,time_stamp_after;
-unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX],coin_table_id[5],EN_CODES[EN_CODES_MAX]={0};
-char execpath[256];
 unsigned char free_thread_running_flg;
-struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
+unsigned int index_resp = RES_HS + HS_BYTES_CNT;
+int total_frames = 0
+char execpath[256], file_path[500];
+time_t t1;
+
 
 //-------------------------------------------------
 //Get the Working Directory
@@ -17,7 +20,6 @@ void get_execpath() {
     strcpy(execpath, "/opt/Testing/Data");
     printf("Working_Dir_path: %s\n", execpath);
 }
-
 //-----------------------------------------------------------
 //Set time out for UDP frames
 //-----------------------------------------------------------
@@ -162,7 +164,7 @@ void send_err_resp_header(int status_code){
 	response[RES_SS] = status_code;
 	response[RES_EX] = 0;
 	response[RES_RE] = 0;
-	response[RES_RE+1] = 0;
+	response[RES_RE+1] = 1;    // response frames count 
 	response[RES_EC] = udp_buffer[REQ_EC];
 	response[RES_EC+1] = udp_buffer[REQ_EC+1];
 	response[RES_HS] = 0;
@@ -171,9 +173,8 @@ void send_err_resp_header(int status_code){
 	response[RES_HS+3] = 0;
 	len=sizeof(cliaddr);
 	
-	sendto(sockfd, (const char *)response, size, MSG_CONFIRM, (const struct sockaddr *) &cliaddr,len);	
+	sendto(sockfd, (const char *)response,size,MSG_CONFIRM,(const struct sockaddr *) &cliaddr,len);	
 }
-
 //-----------------------------------------------------------
 //  Validate request header
 //-----------------------------------------------------------
@@ -208,7 +209,30 @@ unsigned char validate_request_header(unsigned char * buff,int packet_size){
 	}
 	return NO_ERR_CODE;
 }
-
+//------------------------------------------------------------------------------------------
+//  Validate request body 
+//-----------------------------------------------------------------------------------------
+unsigned char validate_request_body_general(unsigned int packet_len,unsigned int req_body,int *req_header_min){
+	*req_header_min = REQ_HEAD_MIN_LEN;
+	if(packet_len != (*req_header_min) + req_body){
+		send_err_resp_header(INVALID_PACKET_LEN);
+		return 0;
+	}
+	return 1;
+}
+//------------------------------------------------------------------------
+//SEND RESPONSE
+//------------------------------------------------------------------------
+void Send_Response(unsigned int size){
+	int len = sizeof(cliaddr);
+	char * myfifo = "/tmp/myfifo";
+	//prepare_resp_header(status_code);
+	sendto(sockfd, (const char *)udp_response, size,
+		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);
+}
+//------------------------------------------------------------------
+//PREPARE RESPONSE HEADER
+//----------------------------------------------------------------
 void prepare_resp_header(unsigned char status_code){
 	unsigned char ex_time;
 	time_stamp_after = get_time_cs();
@@ -232,19 +256,82 @@ void prepare_resp_header(unsigned char status_code){
 	response[RES_HS+3] = 0;
  
 }   
+//---------------------------------------------------------------
+//PREPARE UDP RESPONSE BODY FOR REPORT CHANGES SERVICE
+//--------------------------------------------------------------
+void prepare_udp_resp_body() {
 
-//------------------------------------------------------------------------------------------
-//  Validate coins and request body and return number of coins 
-//-----------------------------------------------------------------------------------------
-unsigned char validate_request_body_general(unsigned int packet_len,unsigned int req_body,int *req_header_min){
-	*req_header_min = REQ_HEAD_MIN_LEN;
-	if(packet_len != (*req_header_min) + req_body){
-		send_err_resp_header(INVALID_PACKET_LEN);
-		return 0;
+    unsigned char status_code;
+    unsigned int size = 0;
+    
+    if(index_resp == RESP_BUFF_MIN_CNT) {
+		status_code = RAIDA_AGENT_NO_CHANGES;  //MIRROR_REQUESTED_FILE_NOT_EXIST
+        total_frames = 0;
+        prepare_resp_header(status_code);
+        memcpy(udp_response, response, index_resp);
+		size = RES_HS + HS_BYTES_CNT;
+		Send_Response_toPrimaryAgent(size);
+		return;
 	}
-	return 1;
-}
+    
+    response[index_resp+0] = 0x3E;
+    response[index_resp+1] = 0x3E;
 
+    int resp_length = index_resp + RESP_BODY_END_BYTES;
+    unsigned int current_length = resp_length;
+    printf("current_length: %u ", current_length);
+
+    total_frames = (resp_length/MAXLINE) + 1;
+    if((resp_length % MAXLINE) == 0) {
+        total_frames = total_frames - 1;
+    }
+    printf("resp_length: %d  current_length: %u total_frames: %d\n", resp_length, current_length, total_frames);
+
+    int frames = 0, index = 0;
+    status_code = MIRROR_REPORT_RETURNED;
+    prepare_resp_header(status_code);
+    while(frames < total_frames) {
+        
+        frames++;
+        
+        if(current_length <= MAXLINE) {
+            memcpy(udp_response, &response[index], current_length);
+            index += current_length;
+            size = current_length;
+            Send_Response_toPrimaryAgent(size);
+        }
+        else {
+            memcpy(udp_response, &response[index], MAXLINE);
+            index += MAXLINE;
+            size = MAXLINE;
+            current_length = current_length - MAXLINE;
+            Send_Response_toPrimaryAgent(size);
+        }
+        printf("current_length: %u frames: %d ", current_length, frames);
+    }
+}
+//---------------------------------------------------------------
+//PREPARRE RESPONSE FOR REPORT CHANGES SERVICE
+//--------------------------------------------------------------
+int prepare_resp_body(int index) {
+    
+    byteObj.val32 = coin_id;
+    response[index+0] = byteObj.byte2[1]; //MSB
+    response[index+1] = byteObj.byte2[0];  //LSB
+    
+    response[index+2] = table_id;
+
+    byteObj.val32 = serial_no;
+    response[index+3] = byteObj.byte4[3]; // msb
+    response[index+4] = byteObj.byte4[2];
+    response[index+5] = byteObj.byte4[1];
+    response[index+6] = byteObj.byte4[0]; // lsb
+    
+    return (index+7);
+}
+//-----------------------------------------------------------------------
+//Get File Nmaes which need to be Synchronised
+//----------------------------------------------------------------------
 void get_ModifiedFiles(char * path)
 {
     struct dirent *dir; 
@@ -352,7 +439,9 @@ void get_ModifiedFiles(char * path)
     }
     closedir(d);
 }
-
+//-------------------------------------------------------------------
+//EXECUTE RREPORT CHANGES SERVICE
+//------------------------------------------------------------------
 void  execute_Report_Changes(unsigned int packet_len) {
 
 	int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + TIMESTAMP_BYTES_CNT, req_header_min, index=0;
@@ -398,6 +487,122 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	get_ModifiedFiles(root_path);
 
 	prepare_udp_resp_body();
+}
 
+void execute_Mirror_Get_Page(unsigned int packet_len) {
+
+    int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + RAIDA_AGENT_FILE_ID_BYTES_CNT;
+	int req_header_min;
+	unsigned int index=0;
+	unsigned char recv_buffer[RAIDA_AGENT_FILE_ID_BYTES_CNT];
+    unsigned int coin_id, table_id;
+
+	if(validate_request_body_general(packet_len,req_body_bytes,&req_header_min)==0){
+		send_err_resp_header(EMPTY_REQ_BODY);
+		return;
+	}
+
+	index = req_header_min + CH_BYTES_CNT;
+	printf("recv_buffer: ");
+
+	//bytes sent in msb to lsb order, so [0] = msb, [1] = lsb;  [3] = msb, [6] = lsb
+	for(int i=0; i < RAIDA_AGENT_FILE_ID_BYTES_CNT;i++) {
+
+		recv_buffer[i] = udp_buffer[index+i];
+		printf("%d ", recv_buffer[i]);
+	}
+
+    bytes.byte_coin[0] = recv_buffer[1]; //lsb
+    bytes.byte_coin[1] = recv_buffer[0];  //msb
+
+    coin_id = bytes.val;
+    table_id = recv_buffer[2];
+
+    bytes.byte_sn[0] = recv_buffer[6];
+    bytes.byte_sn[1] = recv_buffer[5];
+    bytes.byte_sn[2] = recv_buffer[4];
+    bytes.byte_sn[3] = recv_buffer[3];
+
+    serial_no = bytes.val;
+
+    char root_path[256] = "/opt/Testing/Data";
+    char filepath[500];
+
+    strcpy(filepath, root_path);
+    //coin_id
+    strcat(filepath, "/coin_");
+    char c_id[20];
+    sprintf(c_id, "%d", coin_id);
+    strcat(filepath, c_id);
+    //table_id
+    if(table_id == 0) {
+        strcat(filepath, "/ANs");  
+    }
+    else if(table_id == 1) {
+        strcat(filepath, "/Owners");
+    }
+    else if(table_id == 2) {
+        strcat(filepath, "/Statements");
+    }
+    else if(table_id == 3) {
+        strcat(filepath, "/Loss_Coin_Report");
+    }
+    else if(table_id == 4) {
+        strcat(filepath, "/Email_Recover");
+    }
+    else {
+        printf("table_id: %d\n", table_id);
+        printf("Error: Wrong table_id");
+    }
+
+    //serial_no
+
+    char sn_no[20];
+    sprinf(sn_no, "%d", serial_no);
+    strcat(filepath, "/");
+    strcat(filepath, sn_no);
+    strcat(filepath, ".bin");
+
+    printf("filepath: %s\n", filepath);
+
+	strcpy(file_path, filepath);
+
+	Get_File_Contents();
+
+}
+
+
+void Get_File_Contents() {
+
+    FILE *fp_inp = NULL;
+    int ch, size = 0;
+	//char file_path[500];
+
+    fp_inp = fopen(file_path, "rb");
+    if(fb_inp == NULL) {
+        printf("%d.bin cannot be opened, exiting\n", serial_no);
+        return;
+    }
+
+    while((ch = fgetc(fp_inp) ) != EOF) {
+        size++;
+    }
+	printf("file_size: %d\n", size);
+    fclose(fp_inp);
+
+    fp_inp = fopen(file_path, "rb");
+    if(fread(&response[RESP_BUFF_MIN_CNT], 1, size, fp_inp) < size) {
+        printf("Contents missing in the %d.bin file\n", serial_no);
+        return;
+    }
+    fclose(fp_inp);
+
+    printf("contents: ");
+    for(int i=0; i <=size; i++) {
+        printf("%d ", response[i]);
+    }
+    printf("\n");
+
+    index_resp += size;
 
 }

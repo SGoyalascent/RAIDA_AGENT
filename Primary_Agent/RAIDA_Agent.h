@@ -241,7 +241,7 @@ extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
-    const char Ip_address[20];
+    const char* Ip_address;
     unsigned int port_number;
 };
 extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
@@ -291,7 +291,7 @@ int prepare_send_req_header(unsigned char);
 void Call_Report_Changes_Service();
 unsigned char Process_response_Report_Changes();
 void Call_Mirror_Get_Page_Service(unsigned int); 
-void Process_response_Get_Page() ;
+unsigned char Process_response_Get_Page();
 void Update_File_Contents(char , unsigned int, unsigned int);
 
 #endif

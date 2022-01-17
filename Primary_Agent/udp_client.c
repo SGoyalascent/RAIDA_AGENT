@@ -357,10 +357,6 @@ unsigned char buffer_upgrade_coin[MAXLINE] = {0,0,2,0,0,215,0,0,0,0,0,0,22,22,0,
 		printf("%d  ", buffer[i]);
 	}
 	printf("\n");
- //0  0  2  0  0  215  0  0  0  0  0  0  22  22  0  1  0  0  0  0  0  0  155  102  254  83  80  231  201  183  32  120  98  215  94  
- //191  245  131  8  109  218  225  241  98  110  170  211  218  76  197  125  183  205  59  230  146  40  106  203  48  67  29
-
-
 
 	    sendto(sockfd, (const char *)buffer, len,
 	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, 

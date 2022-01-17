@@ -48,7 +48,7 @@ void set_time_out(unsigned char secs){
 }
 
 //-----------------------------------------------------------
-//Receive Response from Raida Agent
+//Receive Response from Services
 //-----------------------------------------------------------
 int Receive_response() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
@@ -188,7 +188,7 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	return 1;
 }
 //--------------------------------------------------------
-//Send Request to Mirror Raida
+//Send Request to Mirror Agent Services
 //---------------------------------------------------------
 void Send_Request(unsigned int size) {
 	char * myfifo = "/tmp/myfifo";
@@ -275,7 +275,7 @@ void Call_Report_Changes_Service() {
 	Send_Request(len);
 }
 //--------------------------------------------------------
-//
+//PROCESS REPORT CHANGES RESPONSE
 //--------------------------------------------------------
 unsigned char Process_response_Report_Changes() {
 
@@ -326,7 +326,7 @@ unsigned char Process_response_Report_Changes() {
 	return status_code;
 }
 //--------------------------------------------------------
-//
+//CALL MIRROR GET PAGE SERVICE
 //--------------------------------------------------------
 void Call_Mirror_Get_Page_Service(unsigned int i) {
 
@@ -353,7 +353,7 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 	Send_Request(len);
 }
 //-----------------------------------------------------------------
-//
+//PROCESS GET PAGE RESPONSE
 //-----------------------------------------------------------------
 unsigned char Process_response_Get_Page() {
 
@@ -455,7 +455,7 @@ unsigned char Process_response_Get_Page() {
 	return status_code;
 }
 //-------------------------------------------------------------------
-//
+//UPDATE THE FILES PAGE RECEIVED FROM GET PAGE SERVICE
 //------------------------------------------------------------------
 void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int index) {
 
