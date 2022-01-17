@@ -1,14 +1,13 @@
-#include "RAIDA_Agent.h"
+#include "Agent_Services.h"
 
 int sockfd;
 fd_set select_fds;               
 struct timeval timeout;
 struct sockaddr_in servaddr, cliaddr;
+union conversion byteObj;
 long time_stamp_before,time_stamp_after;
-unsigned char free_thread_running_flg;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
 unsigned int index_resp = RESP_HEADER_MIN_LEN;
-
 char execpath[256], file_path[500];
 time_t t1;
 
@@ -267,7 +266,7 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
 	response[index_resp+0] = 0x3E;
     response[index_resp+1] = 0x3E;
     
-    if(index_resp == RESP_HEADER_MIN_LEN) {
+    if( index_resp == RESP_HEADER_MIN_LEN ) {
 		index_resp += RESP_BODY_END_BYTES;
         prepare_resp_header(status_code_1, total_frames);
         memcpy(udp_response, response, index_resp);
@@ -302,11 +301,13 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
         printf("current_length: %u frame_no: %d ", current_length, frames);
 		frames++;
     }
+
+	index_resp = RESP_HEADER_MIN_LEN;
 }
 //---------------------------------------------------------------
 //PREPARRE RESPONSE FOR REPORT CHANGES SERVICE
 //--------------------------------------------------------------
-int prepare_resp_body(int index, int coin_id, int table_id, unsigned int serial_no ) {
+unsigned int prepare_resp_body(unsigned int index, unsigned int coin_id, unsigned int table_id, unsigned int serial_no ) {
     
     byteObj.val32 = coin_id;
     response[index+0] = byteObj.byte2[1]; //MSB
@@ -320,7 +321,7 @@ int prepare_resp_body(int index, int coin_id, int table_id, unsigned int serial_
     response[index+5] = byteObj.byte4[1];
     response[index+6] = byteObj.byte4[0]; // lsb
     
-    return (index+7);
+    return (index+RAIDA_AGENT_FILE_ID_BYTES_CNT);
 }
 //-----------------------------------------------------------------------
 //Get File Nmaes which need to be Synchronised
@@ -346,7 +347,7 @@ void get_ModifiedFiles(char * path)
             
 			printf("filename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
-            char datestring[256], sub_path[500];
+            char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
 
             if(stat(df_path, &statbuf) == -1) {
@@ -355,7 +356,6 @@ void get_ModifiedFiles(char * path)
             }
             strcpy(sub_path, &df_path[root_path_len+1]);
             printf("sub_path: %s\n", sub_path);
-
             if(strcmp(sub_path, df_name) == 0) {
                 continue;
             }
@@ -375,10 +375,8 @@ void get_ModifiedFiles(char * path)
             }
             printf("File Modified. Need to be Syncronized.\n");
             
-            char coin[20], table[20];  //coin_1234         //Statements
             unsigned char c_id[10];  //1234 from coin[]
-			int coin_id, table_id;
-            unsigned int serial_no; 
+			unsigned int coin_id, table_id, serial_no; 
 
             char *token;
             token = strtok(sub_path, "/");
@@ -423,7 +421,7 @@ void get_ModifiedFiles(char * path)
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
         }	
-			
+
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
             printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
@@ -433,13 +431,14 @@ void get_ModifiedFiles(char * path)
     closedir(d);
 }
 //-------------------------------------------------------------------
-//EXECUTE RREPORT CHANGES SERVICE
+//EXECUTE REPORT CHANGES SERVICE
 //------------------------------------------------------------------
 void  execute_Report_Changes(unsigned int packet_len) {
 
 	int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + TIMESTAMP_BYTES_CNT, req_header_min, index=0;
 	unsigned char recv_buffer[TIMESTAMP_BYTES_CNT];
 
+	index_resp = RESP_HEADER_MIN_LEN;
 	printf("------------REPORT CHANGES SERVICE-------------------\n");
 	if(validate_request_body_general(packet_len,req_body_bytes,&req_header_min)==0){
 		send_err_resp_header(EMPTY_REQ_BODY);
@@ -477,17 +476,18 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	char *root_path;
 	strcpy(root_path, execpath);
 	get_ModifiedFiles(root_path);
-
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
+	index_resp = RESP_HEADER_MIN_LEN;
 }
+//----------------------------------------------------------
+//EXECUTE GET PAGE SERVICE
+//---------------------------------------------------------
+void execute_Get_Page(unsigned int packet_len) {
 
-void execute_Mirror_Get_Page(unsigned int packet_len) {
-
-    int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + RAIDA_AGENT_FILE_ID_BYTES_CNT;
-	int req_header_min;
-	unsigned int index=0;
+    int req_body_bytes = CH_BYTES_CNT + CMD_END_BYTES_CNT + RAIDA_AGENT_FILE_ID_BYTES_CNT, req_header_min;
+	unsigned int index=0, coin_id, table_id, serial_no;
 	unsigned char recv_buffer[RAIDA_AGENT_FILE_ID_BYTES_CNT];
-    unsigned int coin_id, table_id;
+	index_resp = RESP_HEADER_MIN_LEN;
 
 	if(validate_request_body_general(packet_len,req_body_bytes,&req_header_min)==0){
 		send_err_resp_header(EMPTY_REQ_BODY);
@@ -496,105 +496,100 @@ void execute_Mirror_Get_Page(unsigned int packet_len) {
 
 	index = req_header_min + CH_BYTES_CNT;
 	printf("recv_buffer: ");
-
 	//bytes sent in msb to lsb order, so [0] = msb, [1] = lsb;  [3] = msb, [6] = lsb
 	for(int i=0; i < RAIDA_AGENT_FILE_ID_BYTES_CNT;i++) {
-
 		recv_buffer[i] = udp_buffer[index+i];
 		printf("%d ", recv_buffer[i]);
 	}
+	printf("\n");
 
     bytes.byte_coin[0] = recv_buffer[1]; //lsb
     bytes.byte_coin[1] = recv_buffer[0];  //msb
-
     coin_id = bytes.val;
     table_id = recv_buffer[2];
 
-    bytes.byte_sn[0] = recv_buffer[6];
+    bytes.byte_sn[0] = recv_buffer[6]; //lsb
     bytes.byte_sn[1] = recv_buffer[5];
     bytes.byte_sn[2] = recv_buffer[4];
-    bytes.byte_sn[3] = recv_buffer[3];
-
+    bytes.byte_sn[3] = recv_buffer[3]; //msb
     serial_no = bytes.val;
+	printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 
-    char root_path[256] = "/opt/Testing/Data";
-    char filepath[500];
+    char filepath[500], id[20];
+    strcpy(filepath, execpath);
+    if((coin_id == 254) && (table_id == 0)) {
+		strcat(filepath, "/Owners/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	if((coin_id == 255) && (table_id == 0)) {
+		strcat(filepath, "/my_id_coins/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
 
-    strcpy(filepath, root_path);
-    //coin_id
-    strcat(filepath, "/coin_");
-    char c_id[20];
-    sprintf(c_id, "%d", coin_id);
-    strcat(filepath, c_id);
-    //table_id
-    if(table_id == 0) {
-        strcat(filepath, "/ANs");  
-    }
-    else if(table_id == 1) {
-        strcat(filepath, "/Owners");
+	sprintf(id, "%d", coin_id);
+	strcat(filepath, "/coin_");
+	strcat(filepath, id);
+
+	if(table_id == 1) {
+        strcat(filepath, "/ANs/");  
     }
     else if(table_id == 2) {
-        strcat(filepath, "/Statements");
+        strcat(filepath, "/Statements/");
     }
     else if(table_id == 3) {
-        strcat(filepath, "/Loss_Coin_Report");
+        strcat(filepath, "/Loss_Coin_Report/");
     }
     else if(table_id == 4) {
-        strcat(filepath, "/Email_Recover");
-    }
-    else {
-        printf("table_id: %d\n", table_id);
-        printf("Error: Wrong table_id");
+        strcat(filepath, "/Email_Recover/");
     }
 
-    //serial_no
+	sprintf(id, "%d", serial_no);
+	strcat(filepath, id);
+	strcat(filepath, ".bin");
+	printf("File_path: %s\n", filepath);
+	//strcpy(file_path, filepath);
 
-    char sn_no[20];
-    sprinf(sn_no, "%d", serial_no);
-    strcat(filepath, "/");
-    strcat(filepath, sn_no);
-    strcat(filepath, ".bin");
-
-    printf("filepath: %s\n", filepath);
-
-	strcpy(file_path, filepath);
-
-	Get_File_Contents();
-
+	index_resp = RESP_HEADER_MIN_LEN ;
+	memcpy(&response[index_resp], recv_buffer, RAIDA_AGENT_FILE_ID_BYTES_CNT);
+	index_resp += RAIDA_AGENT_FILE_ID_BYTES_CNT;
+	Get_File_Contents(filepath);
+	if(index_resp == RESP_HEADER_MIN_LEN+RAIDA_AGENT_FILE_ID_BYTES_CNT){
+		index_resp = RESP_HEADER_MIN_LEN;
+	}
+	prepare_udp_resp_body(MIRROR_REQUESTED_FILE_NOT_EXIST, RAIDA_AGENT_PAGES_RETURNED);
+	index_resp = RESP_HEADER_MIN_LEN;
 }
+//--------------------------------------------------------------
+//GET FILE PAGES
+//--------------------------------------------------------------
 
-
-void Get_File_Contents() {
+void Get_File_Contents(char filepath[]) {
 
     FILE *fp_inp = NULL;
     int ch, size = 0;
 	//char file_path[500];
 
-    fp_inp = fopen(file_path, "rb");
-    if(fb_inp == NULL) {
-        printf("%d.bin cannot be opened, exiting\n", serial_no);
+	printf("File_path: %s\n", filepath);
+    fp_inp = fopen(filepath, "rb");
+    if(fp_inp == NULL) {
+        printf("File cannot be opened, exiting\n");
         return;
     }
-
     while((ch = fgetc(fp_inp) ) != EOF) {
         size++;
     }
 	printf("file_size: %d\n", size);
     fclose(fp_inp);
 
-    fp_inp = fopen(file_path, "rb");
-    if(fread(&response[RESP_BUFF_MIN_CNT], 1, size, fp_inp) < size) {
-        printf("Contents missing in the %d.bin file\n", serial_no);
+    fp_inp = fopen(filepath, "rb");
+    if(fread(&response[index_resp], 1, size, fp_inp) < size) {
+        printf("Contents missing in the file\n");
         return;
     }
     fclose(fp_inp);
-
-    printf("contents: ");
-    for(int i=0; i <=size; i++) {
-        printf("%d ", response[i]);
-    }
-    printf("\n");
-
     index_resp += size;
-
 }

@@ -200,7 +200,6 @@
 #define  UDP_RESPONSE 						0
 #define  FIFO_RESPONSE 						1
 
-
 //-----------RAIDA Agent Codes---------------------------------------
 
 #define TABLE_ID_ANS                0
@@ -226,35 +225,20 @@
 #define KEYS_COUNT                10000
 #define AGENT_FRAMES_MAX           66
 
+#include "RAIDA_Agent.h"
 
-
-
-//------MAIN--------------------------
-extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+//-------------SERVICES----------------------
+extern char execpath[256], file_path[500];
 extern time_t t1;
-
-//-------CALL SERVICES-------------------
-
 extern struct sockaddr_in servaddr;
+extern struct timeval timeout;
 extern int sockfd;
 extern fd_set select_fds;  
-extern struct timeval timeout;
-extern unsigned char send_req_buffer[MAXLINE], recv_response[RESPONSE_SIZE_MAX];
-extern unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
-extern unsigned int total_files_count;
+extern long time_stamp_before,time_stamp_after;
+extern unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
+extern unsigned int index_resp;
 
 //--------------------------------------------
-struct agent_config {
-    char Ip_address[20];
-    unsigned int port_number;
-};
-extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
-
-struct server_config {
-	unsigned char raida_id;
-	unsigned int bytes_per_frame;
-};
-extern struct server_config server_config_obj;
 
 union conversion {
 	uint32_t val32;
@@ -264,46 +248,25 @@ union conversion {
 };
 extern union conversion byteObj;
 
-struct timestamp {
-    unsigned char year;
-    unsigned char month;
-    unsigned char day;
-    unsigned char hour;
-    unsigned char minutes;
-    unsigned char second;
-};
-extern struct timestamp tm;
-
-
-//-------------------
-extern unsigned char response_flg;
-extern int32_t key_cnt;            
-extern long time_stamp_before,time_stamp_after;
-extern unsigned char response[RESPONSE_SIZE_MAX],EN_CODES[EN_CODES_MAX];
-
-
-
-
 //---------------MAIN--------------------------------------
 void get_execpath();
-void WelcomeMsg();
-void Read_Agent_Configuration_Files();
-void get_latest_timestamp(char *);
+void set_time_out(unsigned char);
+int init_udp_socket();
+int listen_request();
+void process_request(unsigned int);
+void send_err_resp_header(int);
+unsigned char validate_request_header(unsigned char *,int );
+unsigned char validate_request_body_general(unsigned int ,unsigned int ,int *);
+void Send_Response(unsigned int );
+void prepare_resp_header(unsigned char , int );
+void prepare_udp_resp_body(unsigned char , unsigned char ); 
+unsigned int prepare_resp_body(unsigned int , unsigned int , unsigned int , unsigned int  );
+void get_ModifiedFiles(char * );
+void  execute_Report_Changes(unsigned int );
+void execute_Get_Page(unsigned int );
+void Get_File_Contents(char );
 
-//---------------CALL SERVICES-----------------------------
 
 
-//------------------REPORT CHANGES-------------------------
-
-void prepare_resp_header(unsigned char status_code)
-
-
-
-
-
-
-
-
-//---------------GET PAGE---------------------------------
 
 #endif

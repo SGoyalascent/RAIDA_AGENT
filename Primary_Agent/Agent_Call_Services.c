@@ -358,7 +358,7 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 unsigned char Process_response_Get_Page() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
-	unsigned char status_code;
+	unsigned char status_code, recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];;
 	int resp_header_min;
 
 	packet_len = Receive_response();
@@ -383,8 +383,6 @@ unsigned char Process_response_Get_Page() {
 		return FAIL;
 	}
 	index = resp_header_min;
-	unsigned char recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
-
 	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 
@@ -399,7 +397,6 @@ unsigned char Process_response_Get_Page() {
 	byteObj.byte2[0] = recv_file_id[1];  //LSB
 	byteObj.byte2[1] = recv_file_id[0];   //MSB
 	coin_id = byteObj.val;
-
 	table_id = recv_file_id[2];
 
 	byteObj.byte4[0] = recv_file_id[6];   //LSB
@@ -410,8 +407,7 @@ unsigned char Process_response_Get_Page() {
 
 	printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 
-	char id[20];
-	char filepath[500];
+	char id[20], filepath[500];
 	strcpy(filepath, execpath);
 
 	if((coin_id == 254) && (table_id == 0)) {
@@ -447,9 +443,7 @@ unsigned char Process_response_Get_Page() {
 	sprintf(id, "%d", serial_no);
 	strcat(filepath, id);
 	strcat(filepath, ".bin");
-
 	printf("File_path: %s\n", filepath);
-	
 	Update_File_Contents(filepath, file_size, index);
 
 	return status_code;
@@ -468,7 +462,6 @@ void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int 
         printf("File cannot be opened, exiting\n");
         return;
     }
-
     if(fwrite(&response[index], 1, file_size, fp_inp) < file_size) {
         printf("Contents missing in the file\n");
         return;
