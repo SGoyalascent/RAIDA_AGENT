@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include "Agent_Services.h"
+
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
 #define UDP_BUFF_SIZE 			65535

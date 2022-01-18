@@ -26,7 +26,7 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
+	//servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
 	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Mirror port no.
 
 /*
@@ -48,7 +48,7 @@ void set_time_out(unsigned char secs){
 }
 
 //-----------------------------------------------------------
-//Receive Response from Raida Agent
+//Receive Response from Services
 //-----------------------------------------------------------
 int Receive_response() {
     unsigned char *buffer,state = STATE_WAIT_START,status_code;
@@ -65,7 +65,7 @@ int Receive_response() {
     state = STATE_START_RECVD;	
     status_code = validate_response_header(buffer,n);
     if(status_code != NO_ERR_CODE){
-        printf("Error: Response Header not validated. Error_no: %s\n", status_code);			
+        printf("Error: Response Header not validated. Error_no: %d\n", status_code);			
         return 0;
     }
     memcpy(recv_response,buffer,n);
@@ -188,7 +188,7 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	return 1;
 }
 //--------------------------------------------------------
-//Send Request to Mirror Raida
+//Send Request to Mirror Agent Services
 //---------------------------------------------------------
 void Send_Request(unsigned int size) {
 	char * myfifo = "/tmp/myfifo";
@@ -275,7 +275,7 @@ void Call_Report_Changes_Service() {
 	Send_Request(len);
 }
 //--------------------------------------------------------
-//
+//PROCESS REPORT CHANGES RESPONSE
 //--------------------------------------------------------
 unsigned char Process_response_Report_Changes() {
 
@@ -326,7 +326,7 @@ unsigned char Process_response_Report_Changes() {
 	return status_code;
 }
 //--------------------------------------------------------
-//
+//CALL MIRROR GET PAGE SERVICE
 //--------------------------------------------------------
 void Call_Mirror_Get_Page_Service(unsigned int i) {
 
@@ -353,12 +353,12 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 	Send_Request(len);
 }
 //-----------------------------------------------------------------
-//
+//PROCESS GET PAGE RESPONSE
 //-----------------------------------------------------------------
-void Process_response_Get_Page() {
+unsigned char Process_response_Get_Page() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
-	unsigned char status_code;
+	unsigned char status_code, recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];;
 	int resp_header_min;
 
 	packet_len = Receive_response();
@@ -383,8 +383,6 @@ void Process_response_Get_Page() {
 		return FAIL;
 	}
 	index = resp_header_min;
-	unsigned char recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];
-
 	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 
@@ -399,7 +397,6 @@ void Process_response_Get_Page() {
 	byteObj.byte2[0] = recv_file_id[1];  //LSB
 	byteObj.byte2[1] = recv_file_id[0];   //MSB
 	coin_id = byteObj.val;
-
 	table_id = recv_file_id[2];
 
 	byteObj.byte4[0] = recv_file_id[6];   //LSB
@@ -410,8 +407,7 @@ void Process_response_Get_Page() {
 
 	printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 
-	char id[20];
-	char filepath[500];
+	char id[20], filepath[500];
 	strcpy(filepath, execpath);
 
 	if((coin_id == 254) && (table_id == 0)) {
@@ -447,13 +443,13 @@ void Process_response_Get_Page() {
 	sprintf(id, "%d", serial_no);
 	strcat(filepath, id);
 	strcat(filepath, ".bin");
-
 	printf("File_path: %s\n", filepath);
-	
 	Update_File_Contents(filepath, file_size, index);
+
+	return status_code;
 }
 //-------------------------------------------------------------------
-//
+//UPDATE THE FILES PAGE RECEIVED FROM GET PAGE SERVICE
 //------------------------------------------------------------------
 void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int index) {
 
@@ -466,7 +462,6 @@ void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int 
         printf("File cannot be opened, exiting\n");
         return;
     }
-
     if(fwrite(&response[index], 1, file_size, fp_inp) < file_size) {
         printf("Contents missing in the file\n");
         return;

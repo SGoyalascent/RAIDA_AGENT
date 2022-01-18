@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include "Agent_Services.h"
+
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
 #define UDP_BUFF_SIZE 			65535
@@ -200,7 +202,6 @@
 #define  UDP_RESPONSE 						0
 #define  FIFO_RESPONSE 						1
 
-
 //-----------RAIDA Agent Codes---------------------------------------
 
 #define TABLE_ID_ANS                0
@@ -226,9 +227,6 @@
 #define KEYS_COUNT                10000
 #define AGENT_FRAMES_MAX           66
 
-
-
-
 //------MAIN--------------------------
 extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 extern time_t t1;
@@ -245,7 +243,7 @@ extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
-    char Ip_address[20];
+    const char* Ip_address;
     unsigned int port_number;
 };
 extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
@@ -274,36 +272,28 @@ struct timestamp {
 };
 extern struct timestamp tm;
 
-
-//-------------------
-extern unsigned char response_flg;
-extern int32_t key_cnt;            
-extern long time_stamp_before,time_stamp_after;
-extern unsigned char response[RESPONSE_SIZE_MAX],EN_CODES[EN_CODES_MAX];
-
-
-
-
 //---------------MAIN--------------------------------------
 void get_execpath();
 void WelcomeMsg();
 void Read_Agent_Configuration_Files();
+void getcurrentpath();
+int load_raida_no();
 void get_latest_timestamp(char *);
+void read_keys_file();
 
 //---------------CALL SERVICES-----------------------------
-
-
-//------------------REPORT CHANGES-------------------------
-
-void prepare_resp_header(unsigned char status_code)
-
-
-
-
-
-
-
-
-//---------------GET PAGE---------------------------------
+int init_udp_socket();
+int Receive_response();
+void set_time_out(unsigned char);
+unsigned char validate_response_header(unsigned char *,int);
+unsigned char validate_resp_body_report_changes(unsigned int,int *,int *);
+unsigned char validate_resp_body_get_page(unsigned int,int *,int *);
+void Send_Request(unsigned int);
+int prepare_send_req_header(unsigned char);
+void Call_Report_Changes_Service();
+unsigned char Process_response_Report_Changes();
+void Call_Mirror_Get_Page_Service(unsigned int); 
+unsigned char Process_response_Get_Page();
+void Update_File_Contents(char , unsigned int, unsigned int);
 
 #endif
