@@ -1,5 +1,5 @@
-#ifndef UDP_SOCKET_H
-#define UDP_SOCKET_H
+#ifndef AGENT_SERVICES_H
+#define AGENT_SERVICES_H
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -16,7 +16,8 @@
 #include <stdint.h>
 #include <math.h>
 
-//#include "RAIDA_Agent.h"
+#include "RAIDA_Agent.h"
+
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
 #define UDP_BUFF_SIZE 			65535
