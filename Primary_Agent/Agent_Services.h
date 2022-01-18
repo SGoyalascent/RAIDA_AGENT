@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <math.h>
 
+#include "RAIDA_Agent.h"
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
 #define UDP_BUFF_SIZE 			65535
@@ -225,7 +226,7 @@
 #define KEYS_COUNT                10000
 #define AGENT_FRAMES_MAX           66
 
-#include "RAIDA_Agent.h"
+
 
 //-------------SERVICES----------------------
 extern char execpath[256], file_path[500];
