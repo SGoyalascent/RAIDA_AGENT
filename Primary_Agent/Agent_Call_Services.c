@@ -26,15 +26,15 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
-	//servaddr.sin_addr.s_addr = inet_addr(Mirror_agent_config.Ip_address); //Mirror ip address to send request
+	servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
 	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Mirror port no.
 
 /*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
-	}
-	*/
+	} */
+	
 }
 
 //-----------------------------------------------------------
@@ -58,11 +58,16 @@ int Receive_response() {
 	
 	printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
     memset(buffer,0,server_config_obj.bytes_per_frame);
+	set_time_out(FRAME_TIME_OUT_SECS);
+	if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
+		printf("ERROR: Frame Timeout. Response not received.\n");
+		return 0;
+	}
+
     n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
     index = n;
     curr_frame_no=1;
     printf("Recvd_Frame_no: %d\n", curr_frame_no);
-    state = STATE_START_RECVD;	
     status_code = validate_response_header(buffer,n);
     if(status_code != NO_ERR_CODE){
         printf("Error: Response Header not validated. Error_no: %d\n", status_code);			
@@ -128,11 +133,10 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 		printf("ERROR: Invalid Raida id \n");
 		return WRONG_RAIDA;
 	}
-	/*
 	if((buff[RES_EC] != send_req_buffer[REQ_EC]) || (buff[RES_EC+1] != send_req_buffer[REQ_EC+1])) {
-		printf("Error: EC bytes not match\n");
+		printf("Error: Client echo bytes not match\n");
 		return FAIL;
-	} */
+	} 
 	return NO_ERR_CODE;
 }
 
@@ -145,12 +149,8 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
 	
-	if(*resp_body == 0) {
+	if(*resp_body <= 0) {
 		printf("ERROR: Empty Response Body\n");
-		return 0;
-	}
-	if(*resp_body < 0) {
-		printf("ERROR: Negative Response Body\n");
 		return 0;
 	}
 	if(recv_response[packet_len-1] != RESP_END|| recv_response[packet_len-2] != RESP_END){
@@ -158,7 +158,7 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 		//printf("resp[1] = %d resp[0] = %d\n",recv_response[packet_len-1], recv_response[packet_len-2]);
 		return 0;
 	} 
-	if((*resp_body != 0) && (*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0)) {
+	if((*resp_body%RAIDA_AGENT_FILE_ID_BYTES_CNT != 0)) {
 		printf("Error: Response body does not match. Invalid Packet length\n");
 		return 0;
 	}
@@ -172,12 +172,8 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
-	if(*resp_body == 0) {
+	if(*resp_body <= 0) {
 		printf("ERROR: Empty Response Body\n");
-		return 0;
-	}
-	if(*resp_body < 0) {
-		printf("ERROR: Negative Response Body\n");
 		return 0;
 	}
 	if(recv_response[packet_len-1] != RESP_END|| recv_response[packet_len-2] != RESP_END){
@@ -462,7 +458,7 @@ void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int 
         printf("File cannot be opened, exiting\n");
         return;
     }
-    if(fwrite(&response[index], 1, file_size, fp_inp) < file_size) {
+    if(fwrite(&recv_response[index], 1, file_size, fp_inp) < file_size) {
         printf("Contents missing in the file\n");
         return;
     }

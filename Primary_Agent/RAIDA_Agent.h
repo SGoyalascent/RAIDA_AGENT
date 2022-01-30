@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <inttypes.h>
 #include <fcntl.h>
@@ -16,7 +17,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "Agent_Services.h"
+//#include "Agent_Services.h"
 
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
@@ -243,7 +244,7 @@ extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
-    const char* Ip_address;
+    char* Ip_address;
     unsigned int port_number;
 };
 extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
@@ -294,6 +295,6 @@ void Call_Report_Changes_Service();
 unsigned char Process_response_Report_Changes();
 void Call_Mirror_Get_Page_Service(unsigned int); 
 unsigned char Process_response_Get_Page();
-void Update_File_Contents(char , unsigned int, unsigned int);
+void Update_File_Contents(char [] , unsigned int, unsigned int);
 
 #endif

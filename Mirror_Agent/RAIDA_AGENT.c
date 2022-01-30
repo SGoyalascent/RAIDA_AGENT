@@ -19,7 +19,6 @@ void WelcomeMsg() {
 //Get the Working Directory
 //------------------------------------------------
 void get_execpath() {
-    
     strcpy(execpath, "/opt/Testing");
     printf("Working_Dir_path: %s\n", execpath);
 }
@@ -92,7 +91,7 @@ void Read_Agent_Configuration_Files() {
     while ((dir = readdir(d)) != NULL) 
     {
         if(dir->d_type == DT_REG) {
-            
+
 			char f_path[500], f_name[50];
             strcpy(f_name, dir->d_name);
             strcpy(f_path, path);
@@ -168,7 +167,7 @@ void read_keys_file() {
     }
     printf("Keys_file_size: %d\n", size);
     if(size != KEY_BYTES_CNT*KEYS_COUNT) {
-        printf("Error: Keys file size does not match\n");
+        printf("Error: Keys file size does not match. Keys missing\n");
         return;
     }
     fclose(fp);
@@ -181,8 +180,8 @@ void read_keys_file() {
     fclose(fp);
     
     int index = 0;
-    printf("KEYS: \n");
     for(int i = 0;i < KEYS_COUNT;i++) {
+        printf("KEY_%d: ", i+1);
         memcpy(&keys_bytes[i][0], &buff[index], KEY_BYTES_CNT);
         index += KEY_BYTES_CNT;
         for(int j = 0; j < KEY_BYTES_CNT; j++) {
@@ -195,7 +194,7 @@ void read_keys_file() {
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
 //-----------------------------------------------
-void get_latest_timestamp(char * path)
+void get_latest_timestamp(char *path)
 {
     struct dirent *dir; 
     struct stat statbuf;
@@ -214,7 +213,7 @@ void get_latest_timestamp(char * path)
         sprintf(f_path, "%s/%s", path, dir->d_name);
 
         if((stat(f_path, &statbuf)) == -1) {
-            fprintf(stderr,"Error: %s\n", strerror(errno));
+            printf(stderr,"Error: %s\n", strerror(errno));
             continue;
         }
         //if regular file
@@ -253,8 +252,8 @@ int main() {
     printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
     WelcomeMsg();
     getcurrentpath();
-    load_raida_no();
     get_execpath();
+    load_raida_no();
     printf("-->READ-Agent-Configuration-Files---\n");
     Read_Agent_Configuration_Files();
     read_keys_file();

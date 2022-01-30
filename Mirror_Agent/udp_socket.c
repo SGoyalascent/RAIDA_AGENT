@@ -202,7 +202,7 @@ void send_err_resp_header(int status_code){
 	response[RES_RI] = server_config_obj.raida_id;
 	response[RES_SH] = 0;
 	response[RES_SS] = status_code;
-	response[RES_EX] = ex_time;
+	response[RES_EX] = 0;
 	response[RES_RE] = 0;
 	response[RES_RE+1] = 0;
 	response[RES_EC] = udp_buffer[REQ_EC];
