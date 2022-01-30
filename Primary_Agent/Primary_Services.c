@@ -161,7 +161,7 @@ void send_err_resp_header(int status_code){
 	response[RES_RI] = server_config_obj.raida_id;
 	response[RES_SH] = 0;
 	response[RES_SS] = status_code;
-	response[RES_EX] = 0;
+	response[RES_EX] = ex_time;
 	response[RES_RE] = 0;
 	response[RES_RE+1] = 1;    // response frames count 
 	response[RES_EC] = udp_buffer[REQ_EC];
@@ -420,6 +420,10 @@ void get_ModifiedFiles(char * path)
         
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
+
+			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
+				return;
+			}
         }	
 
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 

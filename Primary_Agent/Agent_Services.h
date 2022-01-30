@@ -223,9 +223,9 @@
 #define AGENT_WITNESS               3
 
 #define SN_SIZE                     14
-#define FILES_COUNT_MAX           10000
+#define FILES_COUNT_MAX           10000  //9360
 #define KEYS_COUNT                10000
-#define AGENT_FRAMES_MAX           66
+#define AGENT_FRAMES_MAX           64
 
 
 
@@ -266,7 +266,7 @@ unsigned int prepare_resp_body(unsigned int , unsigned int , unsigned int , unsi
 void get_ModifiedFiles(char * );
 void  execute_Report_Changes(unsigned int );
 void execute_Get_Page(unsigned int );
-void Get_File_Contents(char );
+void Get_File_Contents(char []);
 
 
 
