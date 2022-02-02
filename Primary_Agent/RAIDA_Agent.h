@@ -20,14 +20,13 @@
 //#include "Agent_Services.h"
 
 //--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		1 
-#define UDP_BUFF_SIZE 			65535
-//------------------------------------------------------------------
+#define FRAME_TIME_OUT_SECS		    1 
+#define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
-#define RESPONSE_SIZE_MAX 		65535
+#define RESPONSE_SIZE_MAX 		    65535
 
-#define VER 255
+#define VER                         255
 //-----------------------------------------------------------------
 //Indexs at which the bytes start
 #define REQ_CL  					0
@@ -55,67 +54,39 @@
 #define REQ_NO_8				21
 
 #define REQ_HEAD_MIN_LEN 		22
+#define REQ_END					62
 //-------------------------------------------------------------
-#define TY_BYTES_CNT				1
-#define TT_BYTES_CNT				1
-#define RA_BYTES_CNT				1
-#define DENOM_BYTES_CNT			1
+
 #define PAGE_NO_BYTES_CNT		1
 #define RAIDA_BYTE_CNT			1
 #define ROWS_BYTES_CNT			1
+
 #define YY_BYTES_CNT				1
-#define MM_BYTES_CNT			1
+#define MM_BYTES_CNT			    1
 #define DD_BYTES_CNT				1
-#define COIN_TYPE_BYTES_CNT		1
-#define MFS_BYTES_CNT			1
-#define FREE_ID_BYTES_CNT			1
-#define CMD_END_BYTES_CNT		2
+
+#define CMD_END_BYTES_CNT		    2
+#define RESP_BODY_END_BYTES         2
 #define SN_BYTES_CNT				3	
-#define OWNER_ID_BYTES_CNT		3
-#define RECORD_BYTES_CNT			3
 #define KEY_ID_BYTES_CNT			3
-#define TK_BYTES_CNT				4
-#define MS_BYTES_CNT			4
-#define AMT_BYTES_CNT			4
 #define HS_BYTES_CNT				4
 #define EN_BYTES_CNT				5
-#define FREE_ID_SERV_LOCK_TIME		6
-#define DT_BYTES_CNT				7	
 #define RESP_BUFF_MIN_CNT			12
-#define FIX_SRNO_MATCH_CNT		13
 
-#define ENCRYPTION_CONFIG_BYTES  16
-#define NOUNCE_BYTES_CNT         16
-
-#define GUID_BYTES_CNT 			16
-#define AN_BYTES_CNT 			16
-#define PAN_BYTES_CNT 			16
-#define PG_BYTES_CNT	 			16
-#define KEY_BYTES_CNT			16
+#define ENCRYPTION_CONFIG_BYTES     16
+#define NOUNCE_BYTES_CNT            16
+#define KEY_BYTES_CNT			    16
 #define CH_BYTES_CNT				16
-#define PWD_BYTES_CNT			16
-#define LEGACY_RAIDA_TK_BYTES_CNT		22
-#define MD_HASH_BYTES_CNT		32
-#define META_DATA_BYTES_CNT		50
-
-#define REQ_END					62
-#define RESP_END                62
-
-#define KEY_HASH_BYTES_CNT		64
-
 //-------------------------------------------------
 #define KEYS_MAX				100
-#define ROWS_MUL_FACTOR			100
-#define MAX_ROWS_SHOW_STAT		255	
 #define FRAMES_MAX				100
 #define EN_CODES_MAX			255
 #define DEFAULT_YEAR			2000
-#define COINS_MAX				2000
 #define SECS_IN_DAY				60 * 60 *24				1
 
 //------Indexs for Response Header----------------------------
-#define RES_RI  						0
-#define RES_SH  						1
+#define RES_RI  					0
+#define RES_SH  					1
 #define RES_SS 	 					2
 #define RES_EX 						3
 #define RES_RE 						4
@@ -123,6 +94,7 @@
 #define RES_HS 						8
 
 #define RESP_HEADER_MIN_LEN         12
+#define RESP_END                    62
 //---------Status Error codes----------------------------------------
 #define INVALID_CLOUD_ID 		   				1
 #define RAIDA_ OFFLINE 			   			2
@@ -149,9 +121,6 @@
 #define COIN_NO_NOT_FOUND					39
 #define SN_ALL_READY_IN_USE					40
 #define SERVICE_LOCKED						41
-
-#define AGENT_GET_PAGE                      40
-#define MIRROR_REPORT_CHANGES               45
 
 #define FAILED_TO_AUTHENTICATE					64
 #define PAGE_NOT_FOUND						66
@@ -188,14 +157,12 @@
 #define SUCCESS								250
 #define FAIL								251
 #define NO_ERR_CODE	 		   				255
-//----------Coin Converter Command Codes---------------------
-#define NO_RESPONSE                    244
-#define NO_TICKET_FOUND                245
-//----------Command codes-----------------------------------------
-#define CMD_COIN_CONVERTER 					215
+//----------Command codes----------------------------------------
 #define CMD_ECHO							4
-
-#define STATE_WAIT_START						1
+#define AGENT_GET_PAGE                      40
+#define MIRROR_REPORT_CHANGES               45
+//-------------------------------------------------------------
+#define STATE_WAIT_START					1
 #define STATE_START_RECVD					2
 #define STATE_WAIT_END						3
 #define STATE_END_RECVD						4
@@ -205,11 +172,12 @@
 
 //-----------RAIDA Agent Codes---------------------------------------
 
-#define TABLE_ID_ANS                0
-#define TABLE_ID_OWNERS             1
-#define TABLE_ID_EMAIL_RECOVER      2
-#define TABLE_ID_STATEMENTS         3 
-#define TABLE_ID_LOSS_COIN          4
+#define TABLE_ID_NO_TABLE               0
+#define TABLE_ID_ANS                    1
+#define TABLE_ID_OWNERS                 254
+#define TABLE_ID_EMAIL_RECOVER          4
+#define TABLE_ID_STATEMENTS             2 
+#define TABLE_ID_LOSS_COIN              3
 
 #define RAIDA_AGENT_TABLE_ID_BYTES_CNT          1
 #define RAIDA_AGENT_COIN_ID_BYTES_CNT           2
@@ -217,16 +185,16 @@
 #define TIMESTAMP_BYTES_CNT		            6
 #define RAIDA_AGENT_FILE_ID_BYTES_CNT           7
 
-#define RESP_BODY_END_BYTES                  2
+
 
 #define AGENT_PRIMARY               1
 #define AGENT_MIRROR                2
 #define AGENT_WITNESS               3
 
 #define SN_SIZE                     14
-#define FILES_COUNT_MAX           10000
+#define FILES_COUNT_MAX           10000  //9360
 #define KEYS_COUNT                10000
-#define AGENT_FRAMES_MAX           66
+#define AGENT_FRAMES_MAX           64
 
 //------MAIN--------------------------
 extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
