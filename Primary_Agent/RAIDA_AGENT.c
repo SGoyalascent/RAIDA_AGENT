@@ -20,7 +20,7 @@ void WelcomeMsg() {
 //Get the Working Directory
 //------------------------------------------------
 void get_execpath() {
-    strcpy(execpath, "/opt/Testing");
+    strcpy(execpath, "/opt/raida");
     printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
@@ -49,7 +49,7 @@ int load_raida_no(){
 	unsigned char buff[24];
 	char path[256];
 	strcpy(path,serverpath);
-	strcat(path,"/Data/raida_no.txt");
+	strcat(path,"/Data_agent/raida_no.txt");
 	if ((fp_inp = fopen(path, "r")) == NULL) {
 		printf("->Error: raida_no.txt Cannot be opened , exiting \n");
 		return 1;
@@ -71,7 +71,7 @@ int load_raida_no(){
 	}
     server_config_obj.bytes_per_frame = 1024;
 
-	printf("Raida Id  :-%d Bytes_per_frame: %d\n", server_config_obj.raida_id, server_config_obj.bytes_per_frame);
+	printf("Raida Id  :-%d   Bytes_per_frame: %d\n", server_config_obj.raida_id, server_config_obj.bytes_per_frame);
 	fclose(fp_inp);
 	return 0;
 }	
@@ -81,71 +81,28 @@ int load_raida_no(){
 //--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
-    char path[50];
-    strcpy(path, execpath);
-    struct dirent *dir; 
-    DIR *d = opendir(path); 
-    if(d == NULL) {
-        printf("Error: Can't find directory path\n");  
+    char path[256];
+
+    char Host_ip[256], Database_name[256], Username[256], User_password[256], Encryption_key[256], Mode[256];
+	int listen_port;
+
+    strcpy(path, serverpath);
+    strcat(path, "/Data_agent/agent_config.txt");
+    FILE *myfile = fopen(path, "r");
+    if(myfile == NULL) {
+        printf("agent_config file not found\n");
+		return;
     }
-    int i=0;
-    while ((dir = readdir(d)) != NULL) 
-    {
-        if(dir->d_type == DT_REG) {
+    fscanf(myfile, "ip_primary = %255s  port_primary_agent = %d  ip_mirror = %255s  port_mirror_agent = %d ip_witness = %255s  port_witness_agent = %d", 
+    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
+    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
-			char f_path[500], f_name[50];
-            strcpy(f_name, dir->d_name);
-            strcpy(f_path, path);
-            strcat(f_path, "/");
-            strcat(f_path, f_name);
-            printf("filename: %s  filepath: %s\n", f_name, f_path);
+    fclose(myfile);
+    
+    printf("ip_primary = %s\t\t port_primary_agent = %d \t\t ip_mirror = %s\t\t port_mirror_agent = %d\t\t ip_witness = %s\t\t port_witness_agent = %d\n", 
+    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
+    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
-            char *token;
-            char *token1;
-            char name[50];
-            strcpy(name, dir->d_name);
-            token = strtok(name, ".");
-            while(token != NULL) {
-                strcpy(token1, token);
-                token = strtok(NULL, ".");
-            }
-
-            strcpy(name, dir->d_name);
-            int stat;
-            if((stat = strcmp(token1, "config")) == 0) {
-                
-                token = strtok(name, ".");
-                token = strtok(NULL, ".");
-                strcpy(Agent_Mode, token);
-                printf("Agent_Mode: %s ", Agent_Mode);
-            }
-            else if((stat = strcmp(token1, "ip")) == 0) {
-                token = strtok(name, ".");
-                if((stat = strcmp(token, "primary")) == 0) {
-                    token = strtok(NULL, ":");
-                    strcpy(Primary_agent_config.Ip_address, token);
-                    token = strtok(NULL, ".");
-                    Primary_agent_config.port_number = atoi(token);
-                    printf("PRIMARY-RAIDA.  Ip_address: %s Port: %d\n", Primary_agent_config.Ip_address, Primary_agent_config.port_number);
-                }
-                else if((stat = strcmp(token, "mirror")) == 0) {
-                    token = strtok(NULL, ":");
-                    strcpy(Mirror_agent_config.Ip_address, token);
-                    token = strtok(NULL, ".");
-                    Mirror_agent_config.port_number = atoi(token);
-                    printf("MIRROR-RAIDA.  Ip_address: %s Port: %d\n", Mirror_agent_config.Ip_address, Mirror_agent_config.port_number);
-                }
-                else if((stat = strcmp(token, "witness")) == 0) {
-                    token = strtok(NULL, ":");
-                    strcpy(Witness_agent_config.Ip_address, token);
-                    token = strtok(NULL, ".");
-                    Witness_agent_config.port_number = atoi(token);
-                    printf("WITNESS-RAIDA.  Ip_address: %s Port: %d\n", Witness_agent_config.Ip_address, Witness_agent_config.port_number);
-                }
-            } 
-        }		
-    }
-    closedir(d);
 }
 
 //-----------------------------------------------
