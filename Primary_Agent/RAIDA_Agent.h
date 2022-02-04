@@ -214,7 +214,7 @@ extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
-    char* Ip_address;
+    char Ip_address[50];
     unsigned int port_number;
 };
 extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;

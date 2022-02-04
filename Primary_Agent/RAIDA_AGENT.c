@@ -20,7 +20,8 @@ void WelcomeMsg() {
 //Get the Working Directory
 //------------------------------------------------
 void get_execpath() {
-    strcpy(execpath, "/opt/raida/Data");
+    //strcpy(execpath, "/opt/raida/Data");
+    strcpy(execpath, "/mnt/e/GIT REPOS/Goyal_ASCENT/RAIDA_AGENT/Testing/raida/Data");   //for testing only
     printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
@@ -52,6 +53,7 @@ int load_raida_no(){
 	char path[256];
 	strcpy(path,serverpath);
 	strcat(path,"/Data_agent/raida_no.txt");
+    printf("path: %s\n", path);
 	if ((fp_inp = fopen(path, "r")) == NULL) {
 		printf("->Error: raida_no.txt Cannot be opened , exiting \n");
 		return 1;
@@ -87,12 +89,13 @@ void Read_Agent_Configuration_Files() {
     char path[256];
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");
+    printf("path: %s\n", path);
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
         printf("agent_config file not found\n");
 		return;
     }
-    fscanf(myfile, "ip_primary = %255s  port_primary_agent = %d  ip_mirror = %255s  port_mirror_agent = %d ip_witness = %255s  port_witness_agent = %d", 
+    fscanf(myfile, "ip_primary = %255s port_primary_agent = %d ip_mirror = %255s port_mirror_agent = %d ip_witness = %255s port_witness_agent = %d", 
     Primary_agent_config.Ip_address, &Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
     &Mirror_agent_config.port_number, Witness_agent_config.Ip_address, &Witness_agent_config.port_number);
 
@@ -115,6 +118,7 @@ void read_keys_file() {
     char buff[KEY_BYTES_CNT*KEYS_COUNT];
     strcpy(path, serverpath);
     strcat(path, "/Keys/keys.bin");
+    printf("path: %s\n", path);
     if((fp = fopen(path, "rb")) == NULL) {
         printf("->Error: Keys.bin file cannot be opened\n");
         return;
@@ -206,7 +210,7 @@ void get_latest_timestamp(char *path)
 
 int main() {
 
-    printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
+    //printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
     WelcomeMsg();
     getcurrentpath();
     get_execpath();
@@ -214,8 +218,9 @@ int main() {
     Read_Agent_Configuration_Files();
     read_keys_file();
 
-    char *path;
+    char path[256];
     strcpy(path, execpath);
+    printf("path: %s\n", path);
     printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
 
