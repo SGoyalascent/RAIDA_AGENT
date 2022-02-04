@@ -21,6 +21,7 @@
 
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		    1 
+#define RESPONSE_TIME_OUT_SECS      10
 #define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
@@ -174,18 +175,19 @@
 
 #define TABLE_ID_NO_TABLE               0
 #define TABLE_ID_ANS                    1
-#define TABLE_ID_OWNERS                 254
-#define TABLE_ID_EMAIL_RECOVER          4
-#define TABLE_ID_STATEMENTS             2 
-#define TABLE_ID_LOSS_COIN              3
+#define TABLE_ID_OWNERS                 2
+#define TABLE_ID_STATEMENTS             3 
+#define TABLE_ID_LOSS_COIN_REPORT       4
+#define TABLE_ID_EMAIL_RECOVER          5
+
+#define COIN_ID_COIN_OWNERS             254
+#define COIN_ID_MY_ID_COINS             255
 
 #define RAIDA_AGENT_TABLE_ID_BYTES_CNT          1
 #define RAIDA_AGENT_COIN_ID_BYTES_CNT           2
 #define RAIDA_AGENT_SN_NO_BYTES_CNT             4
-#define TIMESTAMP_BYTES_CNT		            6
+#define TIMESTAMP_BYTES_CNT		                6
 #define RAIDA_AGENT_FILE_ID_BYTES_CNT           7
-
-
 
 #define AGENT_PRIMARY               1
 #define AGENT_MIRROR                2

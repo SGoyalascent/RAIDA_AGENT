@@ -27,14 +27,12 @@ int init_udp_socket() {
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
-	servaddr.sin_port = htons(Mirror_agent_config.port_number);    //Mirror port no.
+	servaddr.sin_port = htons(Primary_agent_config.port_number);    //Primary Agent and Mirror Services port no.
 
-/*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
-	} */
-	
+	}
 }
 
 //-----------------------------------------------------------
@@ -58,12 +56,11 @@ int Receive_response() {
 	
 	printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
     memset(buffer,0,server_config_obj.bytes_per_frame);
-	set_time_out(FRAME_TIME_OUT_SECS);
+	set_time_out(RESPONSE_TIME_OUT_SECS);
 	if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
-		printf("ERROR: Frame Timeout. Response not received.\n");
+		printf("ERROR: Response Timeout. Response not received.\n");
 		return 0;
 	}
-
     n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
     index = n;
     curr_frame_no=1;
@@ -406,39 +403,35 @@ unsigned char Process_response_Get_Page() {
 	char id[20], filepath[500];
 	strcpy(filepath, execpath);
 
-	if((coin_id == 254) && (table_id == 0)) {
-		strcat(filepath, "/Owners/");
-		sprintf(id, "%d", serial_no);
-		strcat(filepath, id);
-		strcat(filepath, ".bin");
-	}
 	if((coin_id == 255) && (table_id == 0)) {
 		strcat(filepath, "/my_id_coins/");
 		sprintf(id, "%d", serial_no);
 		strcat(filepath, id);
 		strcat(filepath, ".bin");
 	}
-
-	sprintf(id, "%d", coin_id);
-	strcat(filepath, "/coin_");
-	strcat(filepath, id);
-
-	if(table_id == 1) {
-        strcat(filepath, "/ANs/");  
-    }
-    else if(table_id == 2) {
-        strcat(filepath, "/Statements/");
-    }
-    else if(table_id == 3) {
-        strcat(filepath, "/Loss_Coin_Report/");
-    }
-    else if(table_id == 4) {
-        strcat(filepath, "/Email_Recover/");
-    }
-
-	sprintf(id, "%d", serial_no);
-	strcat(filepath, id);
-	strcat(filepath, ".bin");
+	else if((coin_id == 254) && (table_id == 2)) {
+		strcat(filepath, "/coin_owners/owners/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	else if((coin_id == 254) && (table_id == 3)) {
+		strcat(filepath, "/coin_owners/statements/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	else {
+		sprintf(id, "%d", coin_id);
+		strcat(filepath, "/coin_");
+		strcat(filepath, id);
+		if(table_id == 1) {
+			strcat(filepath, "/ANs/");  
+		}
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
 	printf("File_path: %s\n", filepath);
 	Update_File_Contents(filepath, file_size, index);
 

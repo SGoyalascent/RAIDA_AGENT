@@ -4,7 +4,7 @@
 
 #include "RAIDA_Agent.h"
 
-char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 struct timestamp tm;
 struct server_config server_config_obj;
@@ -20,7 +20,7 @@ void WelcomeMsg() {
 //Get the Working Directory
 //------------------------------------------------
 void get_execpath() {
-    strcpy(execpath, "/opt/raida");
+    strcpy(execpath, "/opt/raida/Data");
     printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
@@ -44,7 +44,9 @@ void getcurrentpath()
 //Loads raida no from raida_no.txt
 //----------------------------------------------------------
 int load_raida_no(){
-	FILE *fp_inp=NULL;
+	
+    printf("-->Load RAIDA No.\n");
+    FILE *fp_inp=NULL;
 	int size=0,ch;
 	unsigned char buff[24];
 	char path[256];
@@ -81,11 +83,8 @@ int load_raida_no(){
 //--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
+    printf("-->READ-Agent-Configuration-Files---\n");
     char path[256];
-
-    char Host_ip[256], Database_name[256], Username[256], User_password[256], Encryption_key[256], Mode[256];
-	int listen_port;
-
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");
     FILE *myfile = fopen(path, "r");
@@ -94,8 +93,8 @@ void Read_Agent_Configuration_Files() {
 		return;
     }
     fscanf(myfile, "ip_primary = %255s  port_primary_agent = %d  ip_mirror = %255s  port_mirror_agent = %d ip_witness = %255s  port_witness_agent = %d", 
-    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
-    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
+    Primary_agent_config.Ip_address, &Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
+    &Mirror_agent_config.port_number, Witness_agent_config.Ip_address, &Witness_agent_config.port_number);
 
     fclose(myfile);
     
@@ -114,7 +113,7 @@ void read_keys_file() {
     int size = 0, ch;
     char path[500];
     char buff[KEY_BYTES_CNT*KEYS_COUNT];
-    strcpy(path, execpath);
+    strcpy(path, serverpath);
     strcat(path, "/Keys/keys.bin");
     if((fp = fopen(path, "rb")) == NULL) {
         printf("->Error: Keys.bin file cannot be opened\n");
@@ -212,31 +211,13 @@ int main() {
     getcurrentpath();
     get_execpath();
     load_raida_no();
-    printf("-->READ-Agent-Configuration-Files---\n");
     Read_Agent_Configuration_Files();
     read_keys_file();
 
     char *path;
     strcpy(path, execpath);
-    strcat(path, "/Data");
-    printf("-->MAIN: path: %s\n", path);
     printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
-
-    //echo_mirror_raida_server();
-    /*
-    int stat;
-    if((stat = strcmp(Agent_Mode, "primary")) == 0){
-
-    }
-    else if((stat = strcmp(Agent_Mode, "mirror"))) {
-
-    }
-    else if((stat = strcmp(Agent_Mode, "witness"))) {
-
-    }*/
-
-    //Assume Primary RAIDA AGENT
 
     init_udp_socket();
 
@@ -245,16 +226,12 @@ int main() {
     status_code = Process_response_Report_Changes();
     printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
     if(status_code == FAIL) {
-        printf("Again Call Report Changes Service\n");
-        //Call_Report_Changes_Service();
-        //status_code = Process_response_Report_Changes();
-        //printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
+        printf("Mirror Report Changes Service could not be called\n");
     } 
-    if(status_code == RAIDA_AGENT_NO_CHANGES) {
+    else if(status_code == RAIDA_AGENT_NO_CHANGES) {
         printf("No need to Call GET Page service\n");
     }
-    
-    if(status_code == MIRROR_REPORT_RETURNED) {
+    else if(status_code == MIRROR_REPORT_RETURNED) {
         for(unsigned int i = 0; i < total_files_count;i++) {
             printf("MAIN: CALL- GET-page-service\n");
             Call_Mirror_Get_Page_Service(i);
@@ -262,7 +239,6 @@ int main() {
             Process_response_Get_Page();
         }
     }
-
     return 0;
 
 }

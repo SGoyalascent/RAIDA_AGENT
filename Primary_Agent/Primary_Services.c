@@ -382,41 +382,43 @@ void get_ModifiedFiles(char * path)
             token = strtok(sub_path, "/");
             strcpy(coin, token);
             
-            if(strcmp(coin, "Owners") == 0) {  
-                coin_id = 254;
-                table_id = 0;
-                serial_no = atoi(df_name); 
-                continue;
-            }
-
-            if(strcmp(coin, "my_id_coins") == 0) {
+			if(strcmp(coin, "my_id_coins") == 0) {
                 coin_id = 255;
                 table_id = 0;
                 serial_no = atoi(df_name); 
-                continue;
             }
-
-            token = strtok(NULL, "/");
-            strcpy(table, token);
-
-            token = strtok(coin, "_");
-            token = strtok(NULL,"_");
-            strcpy(c_id, token);
-            coin_id = atoi(c_id);
-            serial_no = atoi(df_name);   //12345.bin file -->  12345
-
-            if(strcmp(table, "ANs") == 0) {
-                table_id = 1;
+            else if(strcmp(coin, "coin_owners") == 0) {  
+                coin_id = 254;
+				token = strtok(NULL, "/");
+            	strcpy(table, token);
+				if(strcmp(table, "owners") == 0) {
+					table_id = 2;
+				}
+				else if(strcmp(table, "statements") == 0) {
+                	table_id = 3;
+            	}
+				serial_no = atoi(df_name);
             }
-            else if(strcmp(table, "Statements") == 0) {
-                table_id = 2;
-            }
+			else {
+				token = strtok(NULL, "/");
+				strcpy(table, token);
+				token = strtok(coin, "_");
+				token = strtok(NULL,"_");
+				strcpy(c_id, token);
+				coin_id = atoi(c_id);
+				serial_no = atoi(df_name);   //12345.bin file -->  12345
+				if(strcmp(table, "ANs") == 0) {
+					table_id = 1;
+				}
+			}
+        
+			/*
             else if(strcmp(table, "Loss_Coin_Report") == 0) {
                 table_id = 3;
             }
             else if(strcmp(table, "Email_Recover") == 0) {
                 table_id = 4;
-            }
+            } */
         
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
