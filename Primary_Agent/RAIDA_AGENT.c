@@ -20,8 +20,8 @@ void WelcomeMsg() {
 //Get the Working Directory
 //------------------------------------------------
 void get_execpath() {
-    //strcpy(execpath, "/opt/raida/Data");
-    strcpy(execpath, "/mnt/e/GIT REPOS/Goyal_ASCENT/RAIDA_AGENT/Testing/raida/Data");   //for testing only
+    strcpy(execpath, "/opt/raida/Data");
+    //strcpy(execpath, "/mnt/e/GIT REPOS/Goyal_ASCENT/RAIDA_AGENT/Testing/raida/Data");   //for testing only
     printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
@@ -46,7 +46,7 @@ void getcurrentpath()
 //----------------------------------------------------------
 int load_raida_no(){
 	
-    printf("-->Load RAIDA No.\n");
+    //printf("-->Load RAIDA No.\n");
     FILE *fp_inp=NULL;
 	int size=0,ch;
 	unsigned char buff[24];
@@ -85,7 +85,7 @@ int load_raida_no(){
 //--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
-    printf("-->READ-Agent-Configuration-Files---\n");
+    //printf("-->READ-Agent-Configuration-Files---\n");
     char path[256];
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");

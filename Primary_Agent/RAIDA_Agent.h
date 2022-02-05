@@ -199,9 +199,8 @@
 #define AGENT_FRAMES_MAX           64
 
 //------MAIN--------------------------
-extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 extern time_t t1;
-
 //-------CALL SERVICES-------------------
 
 extern struct sockaddr_in servaddr;

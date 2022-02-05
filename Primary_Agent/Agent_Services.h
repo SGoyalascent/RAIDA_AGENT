@@ -228,9 +228,10 @@
 #define AGENT_FRAMES_MAX           64
 
 
-
+//------MAIN--------------------------
+extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 //-------------SERVICES----------------------
-extern char execpath[256], file_path[500];
+extern char file_path[500];
 extern time_t t1;
 extern struct sockaddr_in servaddr;
 extern struct timeval timeout;
@@ -249,6 +250,28 @@ union conversion {
 	unsigned char byte4[4];
 };
 extern union conversion byteObj;
+
+struct agent_config {
+    char Ip_address[50];
+    unsigned int port_number;
+};
+extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+
+struct server_config {
+	unsigned char raida_id;
+	unsigned int bytes_per_frame;
+};
+extern struct server_config server_config_obj;
+
+struct timestamp {
+    unsigned char year;
+    unsigned char month;
+    unsigned char day;
+    unsigned char hour;
+    unsigned char minutes;
+    unsigned char second;
+};
+extern struct timestamp tm;
 
 //---------------MAIN--------------------------------------
 void get_execpath();
