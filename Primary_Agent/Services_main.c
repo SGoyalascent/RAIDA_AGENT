@@ -6,9 +6,7 @@
 
 char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
-struct timestamp tm;
 struct server_config server_config_obj;
-time_t t1 = 0;
 
 //-----------------------------------------------
 // Welcome Message
@@ -152,7 +150,21 @@ void read_keys_file() {
     }
 
 }
-
+//----------------------------------------------------------
+// Returns time in centi seconds
+//----------------------------------------------------------
+long get_time_cs()
+{
+    long            ms,cs; // Milliseconds
+    time_t          s;  // Seconds
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    s  = spec.tv_sec;
+    ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to milliseconds
+    cs = ms /100;	
+	printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
+    return ms;	
+}
 int main() {
 
     //printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
@@ -164,6 +176,8 @@ int main() {
     read_keys_file();
 
     init_udp_socket();
+
+    listen_request();
 
     return 0;
 

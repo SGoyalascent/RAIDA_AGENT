@@ -8,17 +8,9 @@ union conversion byteObj;
 long time_stamp_before,time_stamp_after;
 unsigned char udp_buffer[UDP_BUFF_SIZE],response[RESPONSE_SIZE_MAX], udp_response[MAXLINE];
 unsigned int index_resp = RESP_HEADER_MIN_LEN;
-char execpath[256], file_path[500];
+char file_path[500];
 time_t t1;
 
-
-//-------------------------------------------------
-//Get the Working Directory
-//------------------------------------------------
-void get_execpath() {
-    strcpy(execpath, "/opt/Testing/Data");
-    printf("Working_Dir_path: %s\n", execpath);
-}
 //-----------------------------------------------------------
 //Set time out for UDP frames
 //-----------------------------------------------------------
@@ -138,8 +130,8 @@ void process_request(unsigned int packet_len){
 	switch(cmd_no){
 	
 		case MIRROR_REPORT_CHANGES : 		execute_Report_Changes(packet_len);break;
-		case AGENT_GET_PAGE : 				execute_Mirror_Get_Page(packet_len);break;
-		case CMD_ECHO:						execute_echo(packet_len);break;
+		case AGENT_GET_PAGE : 				execute_Get_Page(packet_len);break;
+		//case CMD_ECHO:						execute_echo(packet_len);break;
 		default:							send_err_resp_header(INVALID_CMD);	
 	}
 }
@@ -509,53 +501,50 @@ void execute_Get_Page(unsigned int packet_len) {
 	}
 	printf("\n");
 
-    bytes.byte_coin[0] = recv_buffer[1]; //lsb
-    bytes.byte_coin[1] = recv_buffer[0];  //msb
-    coin_id = bytes.val;
+    byteObj.byte2[0] = recv_buffer[1]; //lsb
+    byteObj.byte2[1] = recv_buffer[0];  //msb
+    coin_id = byteObj.val;
     table_id = recv_buffer[2];
 
-    bytes.byte_sn[0] = recv_buffer[6]; //lsb
-    bytes.byte_sn[1] = recv_buffer[5];
-    bytes.byte_sn[2] = recv_buffer[4];
-    bytes.byte_sn[3] = recv_buffer[3]; //msb
-    serial_no = bytes.val;
+    byteObj.byte4[0] = recv_buffer[6]; //lsb
+    byteObj.byte4[1] = recv_buffer[5];
+    byteObj.byte4[2] = recv_buffer[4];
+    byteObj.byte4[3] = recv_buffer[3]; //msb
+    serial_no = byteObj.val;
 	printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 
     char filepath[500], id[20];
     strcpy(filepath, execpath);
-    if((coin_id == 254) && (table_id == 0)) {
-		strcat(filepath, "/Owners/");
-		sprintf(id, "%d", serial_no);
-		strcat(filepath, id);
-		strcat(filepath, ".bin");
-	}
+    
 	if((coin_id == 255) && (table_id == 0)) {
 		strcat(filepath, "/my_id_coins/");
 		sprintf(id, "%d", serial_no);
 		strcat(filepath, id);
 		strcat(filepath, ".bin");
 	}
-
-	sprintf(id, "%d", coin_id);
-	strcat(filepath, "/coin_");
-	strcat(filepath, id);
-
-	if(table_id == 1) {
-        strcat(filepath, "/ANs/");  
-    }
-    else if(table_id == 2) {
-        strcat(filepath, "/Statements/");
-    }
-    else if(table_id == 3) {
-        strcat(filepath, "/Loss_Coin_Report/");
-    }
-    else if(table_id == 4) {
-        strcat(filepath, "/Email_Recover/");
-    }
-
-	sprintf(id, "%d", serial_no);
-	strcat(filepath, id);
-	strcat(filepath, ".bin");
+	else if((coin_id == 254) && (table_id == 2)) {
+		strcat(filepath, "/coin_owners/owners/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	else if((coin_id == 254) && (table_id == 3)) {
+		strcat(filepath, "/coin_owners/statements/");
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
+	else {
+		sprintf(id, "%d", coin_id);
+		strcat(filepath, "/coin_");
+		strcat(filepath, id);
+		if(table_id == 1) {
+			strcat(filepath, "/ANs/");  
+		}
+		sprintf(id, "%d", serial_no);
+		strcat(filepath, id);
+		strcat(filepath, ".bin");
+	}
 	printf("File_path: %s\n", filepath);
 	//strcpy(file_path, filepath);
 

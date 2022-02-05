@@ -16,8 +16,6 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "RAIDA_Agent.h"
-
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		1 
 #define UDP_BUFF_SIZE 			65535
@@ -290,6 +288,7 @@ void get_ModifiedFiles(char * );
 void  execute_Report_Changes(unsigned int );
 void execute_Get_Page(unsigned int );
 void Get_File_Contents(char []);
+long get_time_cs();
 
 
 
