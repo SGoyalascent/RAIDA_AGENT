@@ -179,14 +179,14 @@ void get_latest_timestamp(char *path)
         }
         //if regular file
         if((statbuf.st_mode & S_IFMT) == S_IFREG) {
-            printf("filename: %s  filepath: %s\n", f_name, f_path);
+            //printf("filename: %s  filepath: %s\n", f_name, f_path);
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
+            //printf("datestring: %s\n", datestring);
 
             time_dif = difftime(t2, t1);
-            printf("time_diff: %g\n", time_dif);
+            //printf("time_diff: %g\n", time_dif);
             if(time_dif > 0) {
                 t1 = t2;
 
@@ -201,7 +201,7 @@ void get_latest_timestamp(char *path)
         }
         //if directory
         else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && (strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0)) {
-            printf("dirname: %s  dirpath: %s\n", f_name, f_path);
+            //printf("dirname: %s  dirpath: %s\n", f_name, f_path);
             get_latest_timestamp(f_path);
         }
     }

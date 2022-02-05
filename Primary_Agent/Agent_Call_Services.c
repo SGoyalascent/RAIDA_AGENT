@@ -26,6 +26,7 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
+	printf("Ip_address: %s\n",(const char*) Mirror_agent_config.Ip_address);
 	servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
 	servaddr.sin_port = htons(Primary_agent_config.port_number);    //Primary Agent and Mirror Services port no.
 
