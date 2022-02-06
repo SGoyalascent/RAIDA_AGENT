@@ -26,14 +26,17 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
-	printf("Ip_address: %s\n",(const char*) Mirror_agent_config.Ip_address);
-	servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
-	servaddr.sin_port = htons(Primary_agent_config.port_number);    //Primary Agent and Mirror Services port no.
+	//servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
+	//servaddr.sin_port = htons(Primary_agent_config.port_number); 
+	servaddr.sin_addr.s_addr = inet_addr("172.105.176.86");
+	servaddr.sin_port = htons(18000);    //Primary Agent and Mirror Services port no.
 
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
+		printf("errno: %d   error: %s\n", errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
+	printf("Bind successfull\n");
 }
 
 //-----------------------------------------------------------
