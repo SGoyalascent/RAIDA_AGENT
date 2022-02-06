@@ -53,6 +53,7 @@ int listen_request(){
 	uint32_t	 client_s_addr=0; 	
 	socklen_t len=sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
+	unsigned int count = 0;
 	while(1){
 		//printf("state: %d", state);
 		switch(state){
@@ -66,6 +67,8 @@ int listen_request(){
 				printf("n: %d\n", n);
 				curr_frame_no=1;
 				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+				count++;
+				printf("count: %u\n", count);
 				state = STATE_START_RECVD;	
 			break;		
 			case STATE_START_RECVD:
@@ -294,10 +297,12 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
             current_length = current_length - MAXLINE;
             Send_Response(size);
         }
+		/*
 		if(frames == 10) {
 			break;
 		}
-        //printf("size: %d  current_length: %u  frame_no: %d\n", size, current_length, frames);
+		*/
+        printf("size: %d  current_length: %u  frame_no: %d\n", size, current_length, frames);
 		frames++;
     }
 

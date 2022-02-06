@@ -20,7 +20,7 @@
 //#include "Agent_Services.h"
 
 //--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		    3 
+#define FRAME_TIME_OUT_SECS		    1 
 #define RESPONSE_TIME_OUT_SECS      10
 #define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48

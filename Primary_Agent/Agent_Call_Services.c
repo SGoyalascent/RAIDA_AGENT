@@ -28,7 +28,7 @@ int init_udp_socket() {
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
 	//servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
 	//servaddr.sin_port = htons(Primary_agent_config.port_number); 
-	servaddr.sin_addr.s_addr = inet_addr("172.105.176.86");
+	servaddr.sin_addr.s_addr = inet_addr("172.245.92.198");
 	servaddr.sin_port = htons(18000);    //Primary Agent and Mirror Services port no.
 	/*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
