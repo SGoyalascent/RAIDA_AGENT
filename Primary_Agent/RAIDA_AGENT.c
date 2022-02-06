@@ -216,7 +216,7 @@ int main() {
     get_execpath();
     load_raida_no();
     Read_Agent_Configuration_Files();
-    read_keys_file();
+    //read_keys_file();
 
     char path[256];
     strcpy(path, execpath);
@@ -231,18 +231,23 @@ int main() {
     status_code = Process_response_Report_Changes();
     printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
     if(status_code == FAIL) {
+        printf("STATUS: FAIL\n");
         printf("Mirror Report Changes Service could not be called\n");
     } 
     else if(status_code == RAIDA_AGENT_NO_CHANGES) {
+        printf("STATUS: RAIDA_AGENT_NO_CHANGES\n");
         printf("No need to Call GET Page service\n");
     }
     else if(status_code == MIRROR_REPORT_RETURNED) {
+        printf("STATUS: MIRROR_REPORT_RETURNED\n");
+        /*
         for(unsigned int i = 0; i < total_files_count;i++) {
             printf("MAIN: CALL- GET-page-service\n");
             Call_Mirror_Get_Page_Service(i);
             printf("MAIN: Process-Get-page\n");
             Process_response_Get_Page();
         }
+        */
     }
     return 0;
 
