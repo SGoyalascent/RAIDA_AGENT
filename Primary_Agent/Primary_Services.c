@@ -282,7 +282,6 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
     prepare_resp_header(status_code_2, total_frames);
     while(frames <= total_frames) {
 
-		printf("frame_no: %d  ", frames);
         if(current_length <= MAXLINE) {
             memcpy(udp_response, &response[index], current_length);
             index += current_length;

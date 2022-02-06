@@ -221,7 +221,7 @@
 #define AGENT_WITNESS               3
 
 #define SN_SIZE                     14
-#define FILES_COUNT_MAX           10000  //9360
+#define FILES_COUNT_MAX           9358
 #define KEYS_COUNT                10000
 #define AGENT_FRAMES_MAX           64
 
