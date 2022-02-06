@@ -274,15 +274,17 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
     if((current_length % MAXLINE) == 0) {
         total_frames = total_frames - 1;
     }
-    printf("current_length: %d total_frames: %d\n", current_length, total_frames);
+    printf("total_length: %d total_frames: %d\n", current_length, total_frames);
 
     prepare_resp_header(status_code_2, total_frames);
     while(frames <= total_frames) {
 
+		//printf("frame_no: %d  ", frames);
         if(current_length <= MAXLINE) {
             memcpy(udp_response, &response[index], current_length);
             index += current_length;
             size = current_length;
+			current_length = 0;
             Send_Response(size);
         }
         else {
@@ -292,7 +294,10 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
             current_length = current_length - MAXLINE;
             Send_Response(size);
         }
-        printf("current_length: %u frame_no: %d ", current_length, frames);
+		if(frames == 10) {
+			break;
+		}
+        //printf("size: %d  current_length: %u  frame_no: %d\n", size, current_length, frames);
 		frames++;
     }
 
@@ -359,7 +364,7 @@ void get_ModifiedFiles(char * path)
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
             //printf("datestring: %s\n", datestring);
             //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
-                                                                                dt->tm_hour,dt->tm_min, dt->tm_sec );
+            //                                                                    dt->tm_hour,dt->tm_min, dt->tm_sec );
         
             time_dif = difftime(t2, t1);
             //printf("time_diff: %g\n", time_dif);

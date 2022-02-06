@@ -20,7 +20,7 @@
 //#include "Agent_Services.h"
 
 //--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		    1 
+#define FRAME_TIME_OUT_SECS		    3 
 #define RESPONSE_TIME_OUT_SECS      10
 #define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48
@@ -196,7 +196,7 @@
 #define SN_SIZE                     14
 #define FILES_COUNT_MAX           10000  //9360
 #define KEYS_COUNT                10000
-#define AGENT_FRAMES_MAX           64
+#define AGENT_FRAMES_MAX           65
 
 //------MAIN--------------------------
 extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
