@@ -30,13 +30,13 @@ int init_udp_socket() {
 	//servaddr.sin_port = htons(Primary_agent_config.port_number); 
 	servaddr.sin_addr.s_addr = inet_addr("172.105.176.86");
 	servaddr.sin_port = htons(18000);    //Primary Agent and Mirror Services port no.
-
+	/*
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		printf("errno: %d   error: %s\n", errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	printf("Bind successfull\n");
+	printf("Bind successfull\n"); */
 }
 
 //-----------------------------------------------------------

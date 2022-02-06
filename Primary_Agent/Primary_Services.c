@@ -36,11 +36,13 @@ int init_udp_socket() {
 	servaddr.sin_family = AF_INET; // IPv4
 	servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_port = htons(Primary_agent_config.port_number);
+	//servaddr.sin_port = htons(18000);
 	// Bind the socket with the server address
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
+	printf("Bind successfull\n");
 }
 //-----------------------------------------------------------
 // receives the UDP packet from the client
@@ -337,7 +339,7 @@ void get_ModifiedFiles(char * path)
 
         if(dir->d_type == DT_REG) {
             
-			printf("filename: %s  filepath: %s\n", df_name, df_path);
+			//printf("filename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
@@ -347,7 +349,7 @@ void get_ModifiedFiles(char * path)
                 continue;
             }
             strcpy(sub_path, &df_path[root_path_len+1]);
-            printf("sub_path: %s\n", sub_path);
+            //printf("sub_path: %s\n", sub_path);
             if(strcmp(sub_path, df_name) == 0) {
                 continue;
             }
@@ -355,17 +357,17 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
-            printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
+            //printf("datestring: %s\n", datestring);
+            //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
                                                                                 dt->tm_hour,dt->tm_min, dt->tm_sec );
         
             time_dif = difftime(t2, t1);
-            printf("time_diff: %g\n", time_dif);
+            //printf("time_diff: %g\n", time_dif);
             if(time_dif <= 0) {
-                printf("File already Syncronized.\n");
+                //printf("File already Syncronized.\n");
                 continue;
             }
-            printf("File Modified. Need to be Syncronized.\n");
+            //printf("File Modified. Need to be Syncronized.\n");
             
             unsigned char c_id[10];  //1234 from coin[]
 			unsigned int coin_id, table_id, serial_no; 
@@ -404,15 +406,7 @@ void get_ModifiedFiles(char * path)
 				}
 			}
         
-			/*
-            else if(strcmp(table, "Loss_Coin_Report") == 0) {
-                table_id = 3;
-            }
-            else if(strcmp(table, "Email_Recover") == 0) {
-                table_id = 4;
-            } */
-        
-            printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+            //printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
 
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
@@ -422,7 +416,7 @@ void get_ModifiedFiles(char * path)
 
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-            printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
+            //printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
             get_ModifiedFiles(df_path); 
         }
     }
@@ -471,7 +465,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
                                                                                 recv_dt->tm_hour,recv_dt->tm_min, recv_dt->tm_sec );
 	}
 
-	char *root_path;
+	char root_path[256];
 	strcpy(root_path, execpath);
 	get_ModifiedFiles(root_path);
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
