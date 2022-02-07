@@ -18,7 +18,7 @@ struct timeval timeout;
 //-----------------------------------------------------------
 int init_udp_socket() {
 	
-	printf("init_udp_socket\n");
+	//printf("init_udp_socket\n");
 	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
@@ -26,17 +26,11 @@ int init_udp_socket() {
 	memset(&servaddr, 0, sizeof(servaddr));	
 	servaddr.sin_family = AF_INET; 
 	//servaddr.sin_addr.s_addr = INADDR_ANY;
-	//servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
-	//servaddr.sin_port = htons(Primary_agent_config.port_number); 
-	servaddr.sin_addr.s_addr = inet_addr("172.245.92.198");
-	servaddr.sin_port = htons(18000);    //Primary Agent and Mirror Services port no.
-	/*
-	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
-		perror("bind failed");
-		printf("errno: %d   error: %s\n", errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-	printf("Bind successfull\n"); */
+	servaddr.sin_addr.s_addr = inet_addr((const char*) Mirror_agent_config.Ip_address); //Mirror ip address to send request
+	servaddr.sin_port = htons(Primary_agent_config.port_number); //Primary Agent and Mirror Services port no.
+	//servaddr.sin_addr.s_addr = inet_addr("172.245.92.198");   
+
+	printf("UDP Socket initialized\n");
 }
 
 //-----------------------------------------------------------
@@ -460,5 +454,83 @@ void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int 
         return;
     }
     fclose(fp_inp);
+
+}
+
+void response_status_codes(int status_code) {
+
+	switch(status_code) {
+		case INVALID_CLOUD_ID:
+			printf("STATUS_CODE: %d  STATUS: INVALID_CLOUD_ID\n", INVALID_CLOUD_ID);
+		break;
+		case RAIDA_OFFLINE:
+			printf("STATUS_CODE: %d  STATUS: RAIDA_OFFLINE\n", RAIDA_OFFLINE);
+		break;
+		case INVALID_FRAME_CNT:
+			printf("STATUS_CODE: %d  STATUS: INVALID_UDP_FRAME_CNT\n", INVALID_FRAME_CNT);
+		break;
+		case INVALID_PACKET_LEN:
+			printf("STATUS_CODE: %d  STATUS: INVALID_PACKET_LEN\n", INVALID_PACKET_LEN);
+		break;
+		case FRAME_TIME_OUT:
+			printf("STATUS_CODE: %d  STATUS: FRAME_TIME_OUT\n", FRAME_TIME_OUT);
+		break;
+		case WRONG_RAIDA:
+			printf("STATUS_CODE: %d  STATUS: WRONG_RAIDA_NO\n", WRONG_RAIDA);
+		break;
+		case INVALID_SPLIT_ID:
+			printf("STATUS_CODE: %d  STATUS: INVALID_SPLIT_ID\n", INVALID_SPLIT_ID);
+		break;
+		case SHARD_NOT_AVAILABLE:
+			printf("STATUS_CODE: %d  STATUS: SHARD_NOT_AVAILABLE\n", SHARD_NOT_AVAILABLE);
+		break;
+		case INVALID_CMD:
+			printf("STATUS_CODE: %d  STATUS: INVALID_CMD\n", INVALID_CMD);
+		break;
+		case INVALID_EN_CODE:
+			printf("STATUS_CODE: %d  STATUS: INVALID_ENCRYPTION_CODE\n", INVALID_EN_CODE);
+		break;
+		case INVALID_END_OF_REQ:
+			printf("STATUS_CODE: %d  STATUS: INVALID_END_OF_REQUEST\n", INVALID_END_OF_REQ);
+		break;
+		case EMPTY_REQ_BODY:
+			printf("STATUS_CODE: %d  STATUS: EMPTY_REQUEST_BODY\n", EMPTY_REQ_BODY);
+		break;
+		case RAIDA_AGENT_PAGES_RETURNED:
+			printf("STATUS_CODE: %d  STATUS: RAIDA_AGENT_PAGES_RETURNED\n", RAIDA_AGENT_PAGES_RETURNED);
+		break;
+		case RAIDA_AGENT_NO_CHANGES:
+			printf("STATUS_CODE: %d  STATUS: RAIDA_AGENT_NO_CHANGES_IN_FILES\n", RAIDA_AGENT_NO_CHANGES);
+		break;
+		case RAIDA_AGENT_PRIMARY_UP:
+			printf("STATUS_CODE: %d  STATUS: RAIDA_AGENT_PRIMARY_UP\n", RAIDA_AGENT_PRIMARY_UP);
+		break;
+		case RAIDA_AGENT_PRIMARY_DOWN:
+			printf("STATUS_CODE: %d  STATUS: RAIDA_AGENT_PRIMARY_DOWN\n", RAIDA_AGENT_PRIMARY_DOWN);
+		break;
+		case MIRROR_MESSAGE_RECEIVED:
+			printf("STATUS_CODE: %d  STATUS: MIRROR_MESSAGE_RECEIVED\n", MIRROR_MESSAGE_RECEIVED);
+		break;
+		case MIRROR_REPORT_RETURNED:
+			printf("STATUS_CODE: %d  STATUS: MIRROR_REPORT_RETURNED\n", MIRROR_REPORT_RETURNED);
+		break;
+		case MIRROR_FILE_NOT_FOUND:
+			printf("STATUS_CODE: %d  STATUS: MIRROR_FILE_NOT_FOUND\n", MIRROR_FILE_NOT_FOUND);
+		break;
+		case SUCCESS:
+			printf("STATUS_CODE: %d  STATUS: SUCCESS\n", SUCCESS);
+		break;
+		case FAIL:
+			printf("STATUS_CODE: %d  STATUS: FAIL\n", FAIL);
+		break;
+		case NO_ERR_CODE:
+			printf("STATUS_CODE: %d  STATUS: NO_ERROR_CODE\n", NO_ERR_CODE);
+		break;
+
+
+
+	}
+
+
 
 }

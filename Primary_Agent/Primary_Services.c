@@ -25,7 +25,7 @@ void set_time_out(unsigned char secs){
 //-----------------------------------------------------------
 int init_udp_socket() {
 	// Creating socket file descriptor
-	printf("init_udp_socket\n");
+	//printf("init_udp_socket\n");
 	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
@@ -36,13 +36,13 @@ int init_udp_socket() {
 	servaddr.sin_family = AF_INET; // IPv4
 	servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_port = htons(Primary_agent_config.port_number);
-	//servaddr.sin_port = htons(18000);
+
 	// Bind the socket with the server address
 	if ( bind(sockfd, (const struct sockaddr *)&servaddr,sizeof(servaddr)) < 0 ){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
-	printf("Bind successfull\n");
+	printf("UDP Socket bind successfull\n");
 }
 //-----------------------------------------------------------
 // receives the UDP packet from the client
@@ -64,9 +64,9 @@ int listen_request(){
 				client_s_addr = 0;	
 				memset(buffer,0,server_config_obj.bytes_per_frame);
 				n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &cliaddr,&len);
-				printf("n: %d\n", n);
+				printf("Request_size: %d\n", n);
 				curr_frame_no=1;
-				printf("--------RECVD  FRAME NO ------ %d\n", curr_frame_no);
+				printf("RECVD_FRAME NO ------ %d\n", curr_frame_no);
 				count++;
 				printf("count: %u\n", count);
 				state = STATE_START_RECVD;	
@@ -296,11 +296,6 @@ void prepare_udp_resp_body(unsigned char status_code_1, unsigned char status_cod
             current_length = current_length - MAXLINE;
             Send_Response(size);
         }
-		/*
-		if(frames == 10) {
-			break;
-		}
-		*/
         printf("size: %d  current_length: %u  frame_no: %d\n", size, current_length, frames);
 		frames++;
     }
@@ -366,14 +361,14 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            //printf("datestring: %s\n", datestring);
+            printf("datestring: %s\n", datestring);
             //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
             //                                                                    dt->tm_hour,dt->tm_min, dt->tm_sec );
         
             time_dif = difftime(t2, t1);
-            //printf("time_diff: %g\n", time_dif);
+            printf("time_diff: %g\n", time_dif);
             if(time_dif <= 0) {
-                //printf("File already Syncronized.\n");
+                printf("File already Syncronized.\n");
                 continue;
             }
             //printf("File Modified. Need to be Syncronized.\n");
@@ -416,7 +411,7 @@ void get_ModifiedFiles(char * path)
 			}
         
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
-			printf("index_resp_prev: %u  ", index_resp);
+			//printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
 			printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
@@ -454,7 +449,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	}
 
 	index = req_header_min + CH_BYTES_CNT;
-	printf("recv_buffer: ");
+	printf("recv_body: ");
 	for(int i=0; i < TIMESTAMP_BYTES_CNT;i++) {
 		recv_buffer[i] = udp_buffer[index+i];
 		printf("%d ", recv_buffer[i]);
@@ -477,14 +472,13 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	else {
 		strftime(date, sizeof(date), "%c", recv_dt);
 		printf("date: %s\n", date);
-		printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", recv_dt->tm_mday,recv_dt->tm_mon+1,recv_dt->tm_year+1900, 
-                                                                                recv_dt->tm_hour,recv_dt->tm_min, recv_dt->tm_sec );
+		//printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", recv_dt->tm_mday,recv_dt->tm_mon+1,recv_dt->tm_year+1900, 
+        //                                                                        recv_dt->tm_hour,recv_dt->tm_min, recv_dt->tm_sec );
 	}
 
 	char root_path[256];
 	strcpy(root_path, execpath);
 	get_ModifiedFiles(root_path);
-	printf("check7\n");
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
 	index_resp = RESP_HEADER_MIN_LEN;
 }
@@ -504,7 +498,7 @@ void execute_Get_Page(unsigned int packet_len) {
 	}
 
 	index = req_header_min + CH_BYTES_CNT;
-	printf("recv_buffer: ");
+	printf("recv_body: ");
 	//bytes sent in msb to lsb order, so [0] = msb, [1] = lsb;  [3] = msb, [6] = lsb
 	for(int i=0; i < RAIDA_AGENT_FILE_ID_BYTES_CNT;i++) {
 		recv_buffer[i] = udp_buffer[index+i];

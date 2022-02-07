@@ -98,7 +98,7 @@
 #define RESP_END                    62
 //---------Status Error codes----------------------------------------
 #define INVALID_CLOUD_ID 		   				1
-#define RAIDA_ OFFLINE 			   			2
+#define RAIDA_OFFLINE 			   			2
 #define INVALID_FRAME_CNT 	 				15
 #define INVALID_PACKET_LEN 	 				16
 #define FRAME_TIME_OUT	 	 				17
@@ -143,7 +143,7 @@
 #define RAIDA_AGENT_PRIMARY_DOWN            104
 #define MIRROR_MESSAGE_RECEIVED             105
 #define MIRROR_REPORT_RETURNED              106
-#define MIRROR_REQUESTED_FILE_NOT_EXIST     107
+#define MIRROR_FILE_NOT_FOUND               107
 
 #define IDENTIFY_COIN_FOUND					192
 #define IDENTIFY_COIN_NOT_FOUND				193

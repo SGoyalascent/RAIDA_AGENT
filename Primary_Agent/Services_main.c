@@ -1,6 +1,3 @@
-// When in Primary mode, Call the Mirror Report Changes service
-// Send request to the Mirror server, receive the response send from the mirror
-// Assume we are using Standard 22 bytes Header
 
 #include "Agent_Services.h"
 
@@ -19,7 +16,6 @@ void WelcomeMsg() {
 //------------------------------------------------
 void get_execpath() {
     strcpy(execpath, "/opt/raida/Data");
-    //strcpy(execpath, "/mnt/e/GIT REPOS/Goyal_ASCENT/RAIDA_AGENT/Testing/raida/Data");   //for testing only
     printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
@@ -44,7 +40,7 @@ void getcurrentpath()
 //----------------------------------------------------------
 int load_raida_no(){
 	
-    //printf("-->Load RAIDA No.\n");
+    printf("-->Load RAIDA No.\n");
     FILE *fp_inp=NULL;
 	int size=0,ch;
 	unsigned char buff[24];
@@ -83,7 +79,7 @@ int load_raida_no(){
 //--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
-    //printf("-->READ-Agent-Configuration-Files---\n");
+    printf("-->READ-Agent-Configuration-Files---\n");
     char path[256];
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");
@@ -99,9 +95,9 @@ void Read_Agent_Configuration_Files() {
 
     fclose(myfile);
     
-    //printf("ip_primary = %s\t\t port_primary_agent = %d \t\t ip_mirror = %s\t\t port_mirror_agent = %d\t\t ip_witness = %s\t\t port_witness_agent = %d\n", 
-    //Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
-    //Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
+    printf("ip_primary = %s\t\t port_primary_agent = %d \t\t ip_mirror = %s\t\t port_mirror_agent = %d\t\t ip_witness = %s\t\t port_witness_agent = %d\n", 
+    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
+    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
 }
 
@@ -167,7 +163,7 @@ long get_time_cs()
 }
 int main() {
 
-    //printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
+    printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
     WelcomeMsg();
     getcurrentpath();
     get_execpath();
