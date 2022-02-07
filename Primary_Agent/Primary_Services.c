@@ -348,7 +348,7 @@ void get_ModifiedFiles(char * path)
 
         if(dir->d_type == DT_REG) {
             
-			//printf("filename: %s  filepath: %s\n", df_name, df_path);
+			printf("filename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
@@ -420,23 +420,22 @@ void get_ModifiedFiles(char * path)
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
 			printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
-				printf("index_resp_return: %u\n", index_resp);
+				printf("index_resp_return_1: %u\n", index_resp);
 				return;
-				printf("check1\n");
 			}
         }	
-		printf("check2\n");
 
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-            printf("check3\n");
-			//printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
+			printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
             get_ModifiedFiles(df_path); 
-			printf("check4\n");
+			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
+				printf("index_resp_return_2: %u\n", index_resp);
+				return;
+			}
+			
         }
-		printf("check5\n");
-    }
-	printf("check6\n");
+	}
     closedir(d);
 }
 //-------------------------------------------------------------------
