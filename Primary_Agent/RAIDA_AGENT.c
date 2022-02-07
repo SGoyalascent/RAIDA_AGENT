@@ -101,9 +101,9 @@ void Read_Agent_Configuration_Files() {
 
     fclose(myfile);
     
-    printf("ip_primary = %s\t\t port_primary_agent = %d \t\t ip_mirror = %s\t\t port_mirror_agent = %d\t\t ip_witness = %s\t\t port_witness_agent = %d\n", 
-    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
-    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
+    //printf("ip_primary = %s\t\t port_primary_agent = %d \t\t ip_mirror = %s\t\t port_mirror_agent = %d\t\t ip_witness = %s\t\t port_witness_agent = %d\n", 
+    //Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
+    //Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
 }
 
@@ -196,7 +196,7 @@ void get_latest_timestamp(char *path)
                 tm.hour = dt->tm_hour;
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
-                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+                //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
             }
         }
         //if directory

@@ -415,20 +415,28 @@ void get_ModifiedFiles(char * path)
 				}
 			}
         
-            //printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+            printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+			printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
-
+			printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
+				printf("index_resp_return: %u\n", index_resp);
 				return;
+				printf("check1\n");
 			}
         }	
+		printf("check2\n");
 
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-            //printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
+            printf("check3\n");
+			//printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
             get_ModifiedFiles(df_path); 
+			printf("check4\n");
         }
+		printf("check5\n");
     }
+	printf("check6\n");
     closedir(d);
 }
 //-------------------------------------------------------------------
@@ -477,6 +485,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	char root_path[256];
 	strcpy(root_path, execpath);
 	get_ModifiedFiles(root_path);
+	printf("check7\n");
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
 	index_resp = RESP_HEADER_MIN_LEN;
 }
