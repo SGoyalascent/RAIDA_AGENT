@@ -52,19 +52,20 @@ int load_raida_no(){
 	char path[256];
 	strcpy(path,serverpath);
 	strcat(path,"/Data_agent/raida_no.txt");
-    printf("path: %s\n", path);
+    //printf("path: %s\n", path);
 	if ((fp_inp = fopen(path, "r")) == NULL) {
 		printf("Error: raida_no.txt Cannot be opened , exiting \n");
 		return 1;
 	}
-	while( ( ch = fgetc(fp_inp) ) != EOF ){
+	while( (ch = fgetc(fp_inp)) != EOF ){
 		size++;
 	}
 	fclose(fp_inp);
 	fp_inp = fopen(path, "r");
 	if(fread(buff, 1, size, fp_inp)<size){
 		printf("Configuration parameters missing in raida_no.txt \n");
-		return 1;
+		//fprintf(stderr, "fread() failed: %zu\n", ret);
+        return 1;
 	}
 	if(size == 2){
 		server_config_obj.raida_id = (buff[0]-48)*10;
@@ -88,7 +89,7 @@ void Read_Agent_Configuration_Files() {
     char path[256];
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");
-    printf("path: %s\n", path);
+    //printf("path: %s\n", path);
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
         printf("agent_config file not found\n");
@@ -185,7 +186,7 @@ void get_latest_timestamp(char *path)
             printf("datestring: %s\n", datestring);
 
             time_dif = difftime(t2, t1);
-            //printf("time_diff: %g\n", time_dif);
+            printf("time_diff: %g\n", time_dif);
             if(time_dif > 0) {
                 t1 = t2;
 
@@ -207,6 +208,22 @@ void get_latest_timestamp(char *path)
     closedir(d);
 }
 
+//----------------------------------------------------------
+// Returns time in centi seconds
+//----------------------------------------------------------
+long get_time_cs()
+{
+    long            ms,cs; // Microseconds
+    time_t          s;  // Seconds
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    s  = spec.tv_sec;
+    ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
+    //cs = ms /100;	
+	//printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
+    return ms;	
+}
+
 int main() {
 
     printf("MAIN: ------------------------------------RAIDA-AGENT-MAIN-----------------------------------\n");
@@ -219,26 +236,16 @@ int main() {
 
     char path[256];
     strcpy(path, execpath);
-    printf("path: %s\n", path);
+    //printf("path: %s\n", path);
     printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
 
     init_udp_socket();
 
-    unsigned char status_code;
+    unsigned char status;
     Call_Report_Changes_Service();
-    status_code = Process_response_Report_Changes();
-    printf("-->MAIN: Report Changes---Status_Code: %d\n", status_code);
-    if(status_code == FAIL) {
-        printf("STATUS: FAIL\n");
-        printf("Mirror Report Changes Service could not be called\n");
-    } 
-    else if(status_code == RAIDA_AGENT_NO_CHANGES) {
-        printf("STATUS: RAIDA_AGENT_NO_CHANGES\n");
-        printf("No need to Call GET Page service\n");
-    }
-    else if(status_code == MIRROR_REPORT_RETURNED) {
-        printf("STATUS: MIRROR_REPORT_RETURNED\n");
+    status = Process_response_Report_Changes();
+    if(status == 1) {
         /*
         for(unsigned int i = 0; i < total_files_count;i++) {
             printf("MAIN: CALL- GET-page-service\n");

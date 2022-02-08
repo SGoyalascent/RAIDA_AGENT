@@ -151,13 +151,13 @@ void read_keys_file() {
 //----------------------------------------------------------
 long get_time_cs()
 {
-    long            ms,cs; // Milliseconds
+    long            ms,cs; // Microseconds
     time_t          s;  // Seconds
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
     s  = spec.tv_sec;
-    ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to milliseconds
-    cs = ms /100;	
+    ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds  
+    //cs = ms /100;	
 	//printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
     return ms;	
 }

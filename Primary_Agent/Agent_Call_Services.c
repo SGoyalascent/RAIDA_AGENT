@@ -268,7 +268,7 @@ void Call_Report_Changes_Service() {
 //--------------------------------------------------------
 //PROCESS REPORT CHANGES RESPONSE
 //--------------------------------------------------------
-unsigned char Process_response_Report_Changes() {
+int Process_response_Report_Changes() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes;
 	unsigned char status_code;
@@ -278,25 +278,25 @@ unsigned char Process_response_Report_Changes() {
 
 	packet_len = Receive_response();
 	if(packet_len == 0) {
-		printf("Error. Reveived wrong response. File names not returned\n");
-		return FAIL;
+		printf("Error: Reveived wrong response. File names not returned\n");
+		return 0;
 	}
 	status_code = recv_response[RES_SS];
-	printf("STATUS: %d\n", status_code);
+	response_status_codes(status_code);
 
 	if(status_code == MIRROR_REPORT_RETURNED) {
 		printf("Requested File names returned\n");
 	} 
 	else if(status_code == RAIDA_AGENT_NO_CHANGES) {
 		printf("No Changes. All Files already Synchronized\n");
-		return RAIDA_AGENT_NO_CHANGES;
+		return 0;
 	}
 	else {
 		printf("Error: Status code does not match. File names not received\n");
-		return FAIL;
+		return 0;
 	} 
 	if(validate_resp_body_report_changes(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
-		return FAIL;
+		return 0;
 	}
 	index = resp_header_min;
 	total_files_count = resp_body_without_end_bytes/RAIDA_AGENT_FILE_ID_BYTES_CNT;
@@ -314,7 +314,7 @@ unsigned char Process_response_Report_Changes() {
 		}
 		printf("\n");
 	}
-	return status_code;
+	return 1;
 }
 //--------------------------------------------------------
 //CALL MIRROR GET PAGE SERVICE
@@ -331,8 +331,8 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 	memcpy(req_file_id, &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	index_req += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 
-	send_req_buffer[index_req+0] = 62;
-	send_req_buffer[index_req+1] = 62;
+	send_req_buffer[index_req+0] = REQ_END;
+	send_req_buffer[index_req+1] = REQ_END;
 	len = index_req + CMD_END_BYTES_CNT;
 
 	printf("req_buffer:- ");
@@ -346,7 +346,7 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 //-----------------------------------------------------------------
 //PROCESS GET PAGE RESPONSE
 //-----------------------------------------------------------------
-unsigned char Process_response_Get_Page() {
+int Process_response_Get_Page() {
 
 	unsigned int packet_len = 0, index = 0, size = 0, resp_body_without_end_bytes, file_size;
 	unsigned char status_code, recv_file_id[RAIDA_AGENT_FILE_ID_BYTES_CNT];;
@@ -354,24 +354,24 @@ unsigned char Process_response_Get_Page() {
 
 	packet_len = Receive_response();
 	if(packet_len == 0) {
-		printf("Error. Reveived wrong response. File Page not received\n");
-		return FAIL;
+		printf("Error: Reveived wrong response. File Page not received\n");
+		return 0;
 	}
 	status_code = recv_response[RES_SS];
-	printf("STATUS: %d\n", status_code);
+	response_status_codes(status_code);
 	if(status_code == RAIDA_AGENT_PAGES_RETURNED) {
 		printf("File Page returned\n");
 	}
-	else if(status_code == MIRROR_REQUESTED_FILE_NOT_EXIST) {
-		printf("Requested file does not exist\n");
-		return status_code;
+	else if(status_code == MIRROR_FILE_NOT_FOUND) {
+		printf("Requested file does not found\n");
+		return 0;
 	}
 	else {
 		printf("Error: Status code does not match. File Page not returned\n");
-		return FAIL;
+		return 0;
 	} 
 	if(validate_resp_body_get_page(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
-		return FAIL;
+		return 0;
 	}
 	index = resp_header_min;
 	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
@@ -433,7 +433,7 @@ unsigned char Process_response_Get_Page() {
 	printf("File_path: %s\n", filepath);
 	Update_File_Contents(filepath, file_size, index);
 
-	return status_code;
+	return 1;
 }
 //-------------------------------------------------------------------
 //UPDATE THE FILES PAGE RECEIVED FROM GET PAGE SERVICE
@@ -441,8 +441,8 @@ unsigned char Process_response_Get_Page() {
 void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int index) {
 
     FILE *fp_inp = NULL;
-    //har file_path[500];
-	//strcpy(file_path, filepath);
+    char file_path[500];
+	strcpy(file_path, filepath);
 
     fp_inp = fopen(filepath, "wb");
     if(fp_inp == NULL) {
@@ -454,6 +454,7 @@ void Update_File_Contents(char filepath[], unsigned int file_size, unsigned int 
         return;
     }
     fclose(fp_inp);
+	printf("File modified and synchronized with the Mirror Raida\n");
 
 }
 

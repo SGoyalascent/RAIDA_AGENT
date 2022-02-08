@@ -129,6 +129,7 @@ int listen_request(){
 void process_request(unsigned int packet_len){
 	uint16_t cmd_no=0, coin_id;
 	time_stamp_before = get_time_cs();
+	printf("time_stamp_before: %ld\n", time_stamp_before);
 	memset(response,0,RESPONSE_SIZE_MAX-1);
 	cmd_no = udp_buffer[REQ_CM+1];
 	cmd_no |= (((uint16_t)udp_buffer[REQ_CM])<<8);
@@ -232,11 +233,13 @@ void Send_Response(unsigned int size){
 void prepare_resp_header(unsigned char status_code, int total_frames){
 	unsigned char ex_time;
 	time_stamp_after = get_time_cs();
+	printf("time_stamp_after: %ld\n", time_stamp_after);
 	if((time_stamp_after-time_stamp_before) > 255){
 		ex_time = 255;
 	}else{
 		ex_time= time_stamp_after-time_stamp_before;
 	}
+	printf("ex_time: %d\n", ex_time);
 
 	response[RES_RI] = server_config_obj.raida_id;
 	response[RES_SH] = 0;

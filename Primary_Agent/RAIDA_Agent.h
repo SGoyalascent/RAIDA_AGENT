@@ -250,6 +250,7 @@ void getcurrentpath();
 int load_raida_no();
 void get_latest_timestamp(char *);
 void read_keys_file();
+long get_time_cs();
 
 //---------------CALL SERVICES-----------------------------
 int init_udp_socket();
@@ -261,9 +262,10 @@ unsigned char validate_resp_body_get_page(unsigned int,int *,int *);
 void Send_Request(unsigned int);
 int prepare_send_req_header(unsigned char);
 void Call_Report_Changes_Service();
-unsigned char Process_response_Report_Changes();
+int Process_response_Report_Changes();
 void Call_Mirror_Get_Page_Service(unsigned int); 
-unsigned char Process_response_Get_Page();
+int Process_response_Get_Page();
 void Update_File_Contents(char [] , unsigned int, unsigned int);
+void response_status_codes(int );
 
 #endif
