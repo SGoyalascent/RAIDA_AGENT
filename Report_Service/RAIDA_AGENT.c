@@ -179,7 +179,7 @@ void get_latest_timestamp(char *path)
         }
         //if regular file
         if((statbuf.st_mode & S_IFMT) == S_IFREG) {
-            printf("filename: %s  filepath: %s\n", f_name, f_path);
+            //printf("filename: %s  filepath: %s\n", f_name, f_path);
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
@@ -243,12 +243,14 @@ int main() {
     get_latest_timestamp(path);
 
     init_udp_socket();
-
+    int no = 0;
     unsigned char status;
     for(int i=0; i < 100; i++) {
+        no++;
         Call_Report_Changes_Service();
         status = Process_response_Report_Changes();
     }
+    printf("send_count: %d\n", no);
     printf("fail: %d\n", fail);
     //Call_Mirror_Get_Page_Service(0);
     //Process_response_Get_Page();

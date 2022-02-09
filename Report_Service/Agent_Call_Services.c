@@ -106,7 +106,8 @@ int Receive_response() {
 				//printf("--------RESPONSE END RECVD---------\n");
 				printf("ERROR: All frames received.\n");
 				printf("Frames_received: %d\n", curr_frame_no);
-				return index;
+				//return index;
+				return 0;
 			break;
 		}
 	}
@@ -242,7 +243,7 @@ int prepare_send_req_header(unsigned char command_code) {
 //----------------------------------------------------------------------------------------
 void Call_Report_Changes_Service() {
 
-	printf("-->SERVICES: -------CALL MIRROR REPORT CHANGES SERVICE---------\n");
+	//printf("-->SERVICES: -------CALL MIRROR REPORT CHANGES SERVICE---------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
 	int index_req, len;
@@ -250,7 +251,7 @@ void Call_Report_Changes_Service() {
 
 	//Assign timestamp bytes in the buffer
 	// YY, MM, DD, HH, MM, SS
-	printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+	//printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
 
     send_req_buffer[index_req + 0] = tm.year;
     send_req_buffer[index_req + 1] = tm.month;
@@ -264,11 +265,11 @@ void Call_Report_Changes_Service() {
     send_req_buffer[index_req+TIMESTAMP_BYTES_CNT+1] = 62;
 
     len = index_req + TIMESTAMP_BYTES_CNT + CMD_END_BYTES_CNT;
-    printf("send_buffer:- ");
+    //printf("send_buffer:- ");
     for(int i=0; i < len; i++) {
-        printf("%d ", send_req_buffer[i] );
+     //   printf("%d ", send_req_buffer[i] );
     }
-    printf("\n");
+    //printf("\n");
 
 	Send_Request(len);
 }
@@ -281,11 +282,11 @@ int Process_response_Report_Changes() {
 	unsigned char status_code;
 	int resp_header_min;
 
-	printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
+	//printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
 
 	packet_len = Receive_response();
 	if(packet_len == 0) {
-		printf("Error: Reveived wrong response. File names not returned\n");
+		//printf("Error: Reveived wrong response. File names not returned\n");
 		return 0;
 	}
 	status_code = recv_response[RES_SS];
