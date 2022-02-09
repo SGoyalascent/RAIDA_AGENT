@@ -346,7 +346,7 @@ void get_ModifiedFiles(char * path)
 
         if(dir->d_type == DT_REG) {
             
-			printf("filename: %s  filepath: %s\n", df_name, df_path);
+			//printf("filename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
@@ -364,7 +364,7 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
+            //printf("datestring: %s\n", datestring);
             //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
             //                                                                    dt->tm_hour,dt->tm_min, dt->tm_sec );
         
@@ -412,23 +412,25 @@ void get_ModifiedFiles(char * path)
 					table_id = 1;
 				}
 			}
-        
+
+			printf("filename: %s  filepath: %s\n", df_name, df_path);
+			printf("datestring: %s\n", datestring);
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			//printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
 			printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
-				printf("index_resp_return_1: %u\n", index_resp);
+				//printf("index_resp_return_1: %u\n", index_resp);
 				return;
 			}
         }	
 
         if((dir->d_type == DT_DIR) && strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0 ) 
         {
-			printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
+			//printf("dir_name: %s  dir_path: %s\n", df_name,df_path);
             get_ModifiedFiles(df_path); 
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
-				printf("index_resp_return_2: %u\n", index_resp);
+				//printf("index_resp_return_2: %u\n", index_resp);
 				return;
 			}
 			

@@ -1,0 +1,6 @@
+ip_primary = 172.105.176.86
+port_primary_agent = 18000
+ip_mirror = 172.245.92.198
+port_mirror_agent = 18000
+ip_witness = 51.79.220.85
+port_witness_agent = 30994

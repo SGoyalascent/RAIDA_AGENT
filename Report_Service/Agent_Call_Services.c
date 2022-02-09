@@ -296,6 +296,7 @@ int Process_response_Report_Changes() {
 		return 0;
 	} 
 	if(validate_resp_body_report_changes(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
+		printf("Request body not validated\n");
 		return 0;
 	}
 	index = resp_header_min;
@@ -307,12 +308,61 @@ int Process_response_Report_Changes() {
 		index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	}
 
+	unsigned int coin_id, table_id, serial_no;
+
 	for(int i=0; i < total_files_count; i++) {
 		printf("File_id-%d: ", i+1);
 		for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT; j++) {
 			printf("%d ", files_id[i][j]);
 		}
 		printf("\n");
+		//----------------------------------------------------
+		byteObj.byte2[0] = files_id[i][1];  //LSB
+		byteObj.byte2[1] = files_id[i][0];   //MSB
+		coin_id = byteObj.val;
+		table_id = files_id[i][2];
+		byteObj.byte4[0] = files_id[i][6];   //LSB
+		byteObj.byte4[1] = files_id[i][5];
+		byteObj.byte4[2] = files_id[i][4];
+		byteObj.byte4[3] = files_id[i][3];   //MSB
+		serial_no = byteObj.val;
+		printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
+
+		char id[20], filepath[500];
+		strcpy(filepath, execpath);
+
+		if((coin_id == 255) && (table_id == 0)) {
+			strcat(filepath, "/my_id_coins/");
+			sprintf(id, "%d", serial_no);
+			strcat(filepath, id);
+			strcat(filepath, ".bin");
+		}
+		else if((coin_id == 254) && (table_id == 2)) {
+			strcat(filepath, "/coin_owners/owners/");
+			sprintf(id, "%d", serial_no);
+			strcat(filepath, id);
+			strcat(filepath, ".bin");
+		}
+		else if((coin_id == 254) && (table_id == 3)) {
+			strcat(filepath, "/coin_owners/statements/");
+			sprintf(id, "%d", serial_no);
+			strcat(filepath, id);
+			strcat(filepath, ".bin");
+		}
+		else {
+			sprintf(id, "%d", coin_id);
+			strcat(filepath, "/coin_");
+			strcat(filepath, id);
+			if(table_id == 1) {
+				strcat(filepath, "/ANs/");  
+			}
+			sprintf(id, "%d", serial_no);
+			strcat(filepath, id);
+			strcat(filepath, ".bin");
+		}
+		printf("File_path: %s\n", filepath);
+		printf("\n");
+		//-------------------------------------------------------
 	}
 	return 1;
 }
@@ -330,6 +380,15 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 	memcpy(&send_req_buffer[index_req], &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	memcpy(req_file_id, &files_id[i][0], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	index_req += RAIDA_AGENT_FILE_ID_BYTES_CNT;
+	
+	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
+		printf("files_id[0] = %d ", files_id[0][j]);
+	}
+	printf("\n");
+	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
+		printf("files_id[0] = %d ", req_file_id[j]);
+	}
+	printf("\n");
 
 	send_req_buffer[index_req+0] = REQ_END;
 	send_req_buffer[index_req+1] = REQ_END;
@@ -379,7 +438,7 @@ int Process_response_Get_Page() {
 
 	if(memcmp(recv_file_id, req_file_id, RAIDA_AGENT_FILE_ID_BYTES_CNT) != 0) {
 		printf("Error: Requested File and Received File not same\n");
-		return FAIL;
+		return 0;
 	}
 
 	file_size = resp_body_without_end_bytes - RAIDA_AGENT_FILE_ID_BYTES_CNT;
@@ -431,7 +490,7 @@ int Process_response_Get_Page() {
 		strcat(filepath, ".bin");
 	}
 	printf("File_path: %s\n", filepath);
-	Update_File_Contents(filepath, file_size, index);
+	//Update_File_Contents(filepath, file_size, index);
 
 	return 1;
 }
@@ -527,11 +586,5 @@ void response_status_codes(int status_code) {
 		case NO_ERR_CODE:
 			printf("STATUS_CODE: %d  STATUS: NO_ERROR_CODE\n", NO_ERR_CODE);
 		break;
-
-
-
 	}
-
-
-
 }
