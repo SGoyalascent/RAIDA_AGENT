@@ -346,7 +346,7 @@ void get_ModifiedFiles(char * path)
 
         if(dir->d_type == DT_REG) {
             
-			//printf("filename: %s  filepath: %s\n", df_name, df_path);
+			printf("filename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
@@ -364,7 +364,7 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            //printf("datestring: %s\n", datestring);
+            printf("datestring: %s\n", datestring);
             //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
             //                                                                    dt->tm_hour,dt->tm_min, dt->tm_sec );
         
@@ -374,7 +374,7 @@ void get_ModifiedFiles(char * path)
                 printf("File already Syncronized.\n");
                 continue;
             }
-            //printf("File Modified. Need to be Syncronized.\n");
+            printf("File Modified. Need to be Syncronized.\n");
             
             unsigned char c_id[10];  //1234 from coin[]
 			unsigned int coin_id, table_id, serial_no; 
@@ -413,8 +413,8 @@ void get_ModifiedFiles(char * path)
 				}
 			}
 
-			printf("filename: %s  filepath: %s\n", df_name, df_path);
-			printf("datestring: %s\n", datestring);
+			//printf("filename: %s  filepath: %s\n", df_name, df_path);
+			//printf("datestring: %s\n", datestring);
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			//printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
