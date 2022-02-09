@@ -183,7 +183,7 @@ void get_latest_timestamp(char *path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
+            //printf("datestring: %s\n", datestring);
 
             time_dif = difftime(t2, t1);
             //printf("time_diff: %g\n", time_dif);
@@ -196,7 +196,7 @@ void get_latest_timestamp(char *path)
                 tm.hour = dt->tm_hour;
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
-                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+                //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
             }
         }
         //if directory
@@ -239,15 +239,17 @@ int main() {
     char path[256];
     strcpy(path, execpath);
     //printf("path: %s\n", path);
-    printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
+    //printf("-->MAIN: GET-LATEST-TIMESTAMP---\n");
     get_latest_timestamp(path);
 
     init_udp_socket();
 
     unsigned char status;
-    Call_Report_Changes_Service();
-    status = Process_response_Report_Changes();
-
+    for(int i=0; i < 100; i++) {
+        Call_Report_Changes_Service();
+        status = Process_response_Report_Changes();
+    }
+    printf("fail: %d\n", fail);
     //Call_Mirror_Get_Page_Service(0);
     //Process_response_Get_Page();
     

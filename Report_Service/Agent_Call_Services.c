@@ -11,6 +11,7 @@ unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file
 unsigned int total_files_count = 0;
 union conversion byteObj;
 struct timeval timeout;
+unsigned int count = 0, fail = 0;
 
 
 //-----------------------------------------------------------
@@ -52,8 +53,10 @@ int Receive_response() {
 	socklen_t len = sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
 	
-	printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
-    memset(buffer,0,server_config_obj.bytes_per_frame);
+	//printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
+    count++;
+	printf("count: %d\n", count);
+	memset(buffer,0,server_config_obj.bytes_per_frame);
 	set_time_out(RESPONSE_TIME_OUT_SECS);
 	if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
 		printf("ERROR: Response Timeout. Response not received.\n");
@@ -62,7 +65,7 @@ int Receive_response() {
     n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
     index = n;
     curr_frame_no=1;
-    printf("Recvd_Frame_no: %d\n", curr_frame_no);
+    //printf("Recvd_Frame_no: %d\n", curr_frame_no);
     status_code = validate_response_header(buffer,n);
     if(status_code != NO_ERR_CODE){
         printf("Error: Response Header not validated. Error_no: %d\n", status_code);			
@@ -84,6 +87,8 @@ int Receive_response() {
 				set_time_out(FRAME_TIME_OUT_SECS);
 				if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
 					printf("ERROR: Frame Timeout. All frames not received.\n");
+					printf("Frames_received: %d\n", curr_frame_no);
+					fail++;
 					return 0;
 				}
 				else {
@@ -91,14 +96,16 @@ int Receive_response() {
 					memcpy(&recv_response[index],buffer,n);
 					index += n;
 					curr_frame_no++;
-					printf("Recvd_Frame_no: %d\n", curr_frame_no);
+					//printf("Recvd_Frame_no: %d\n", curr_frame_no);
 					if(curr_frame_no==frames_expected){
 						state = STATE_END_RECVD;
 					}
 				}	
 			break;			
 			case STATE_END_RECVD:
-				printf("--------RESPONSE END RECVD---------\n");
+				//printf("--------RESPONSE END RECVD---------\n");
+				printf("ERROR: All frames received.\n");
+				printf("Frames_received: %d\n", curr_frame_no);
 				return index;
 			break;
 		}

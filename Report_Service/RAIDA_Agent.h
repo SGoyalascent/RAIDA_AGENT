@@ -20,8 +20,8 @@
 //#include "Agent_Services.h"
 
 //--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		    1 
-#define RESPONSE_TIME_OUT_SECS      30
+#define FRAME_TIME_OUT_SECS		    2 
+#define RESPONSE_TIME_OUT_SECS      10
 #define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
@@ -202,6 +202,7 @@
 extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 extern time_t t1;
 //-------CALL SERVICES-------------------
+extern unsigned int count, fail;
 
 extern struct sockaddr_in servaddr;
 extern int sockfd;
