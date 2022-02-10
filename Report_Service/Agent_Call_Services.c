@@ -11,8 +11,6 @@ unsigned char files_id[FILES_COUNT_MAX][RAIDA_AGENT_FILE_ID_BYTES_CNT], req_file
 unsigned int total_files_count = 0;
 union conversion byteObj;
 struct timeval timeout;
-unsigned int count = 0, fail = 0;
-
 
 //-----------------------------------------------------------
 //Initialize UDP Socket
@@ -53,9 +51,7 @@ int Receive_response() {
 	socklen_t len = sizeof(struct sockaddr_in);
 	buffer = (unsigned char *) malloc(server_config_obj.bytes_per_frame);
 	
-	//printf("-->SERVICES:-------WAITING FOR RESPONSE-------------\n");	
-    count++;
-	printf("count: %d\n", count);
+	printf("-------WAITING FOR RESPONSE-------------\n");	
 	memset(buffer,0,server_config_obj.bytes_per_frame);
 	set_time_out(RESPONSE_TIME_OUT_SECS);
 	if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
@@ -65,7 +61,7 @@ int Receive_response() {
     n = recvfrom(sockfd, (unsigned char *)buffer, server_config_obj.bytes_per_frame,MSG_WAITALL,(struct sockaddr *) &servaddr,&len);
     index = n;
     curr_frame_no=1;
-    //printf("Recvd_Frame_no: %d\n", curr_frame_no);
+    printf("Recvd_Frame_no: %d\n", curr_frame_no);
     status_code = validate_response_header(buffer,n);
     if(status_code != NO_ERR_CODE){
         printf("Error: Response Header not validated. Error_no: %d\n", status_code);			
@@ -87,8 +83,6 @@ int Receive_response() {
 				set_time_out(FRAME_TIME_OUT_SECS);
 				if (select(32, &select_fds, NULL, NULL, &timeout) == 0 ){
 					printf("ERROR: Frame Timeout. All frames not received.\n");
-					printf("Frames_received: %d\n", curr_frame_no);
-					fail++;
 					return 0;
 				}
 				else {
@@ -96,18 +90,15 @@ int Receive_response() {
 					memcpy(&recv_response[index],buffer,n);
 					index += n;
 					curr_frame_no++;
-					//printf("Recvd_Frame_no: %d\n", curr_frame_no);
+					printf("Recvd_Frame_no: %d\n", curr_frame_no);
 					if(curr_frame_no==frames_expected){
 						state = STATE_END_RECVD;
 					}
 				}	
 			break;			
 			case STATE_END_RECVD:
-				//printf("--------RESPONSE END RECVD---------\n");
-				printf("ERROR: All frames received.\n");
-				printf("Frames_received: %d\n", curr_frame_no);
-				//return index;
-				return 0;
+				printf("--------RESPONSE END RECVD---------\n");
+				return index;
 			break;
 		}
 	}
@@ -140,6 +131,7 @@ unsigned char validate_response_header(unsigned char * buff,int packet_size){
 		printf("Error: Client echo bytes not match\n");
 		return FAIL;
 	} 
+	printf("----------RESPONSE HEADER VALIDATED--------------\n");
 	return NO_ERR_CODE;
 }
 
@@ -150,6 +142,7 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 	*resp_header_min = RESP_HEADER_MIN_LEN;
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
+	printf("----VALIDATE RESPONSE BODY----\n");
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
 	
 	if(*resp_body <= 0) {
@@ -165,6 +158,7 @@ unsigned char validate_resp_body_report_changes(unsigned int packet_len,int *res
 		printf("Error: Response body does not match. Invalid Packet length\n");
 		return 0;
 	}
+	printf("----RESPONSE BODY VALIDATED----\n");
 	return 1;
 }
 //------------------------------------------------------------------------------------------
@@ -174,6 +168,7 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 	*resp_header_min = RESP_HEADER_MIN_LEN;
 	*resp_body = packet_len - *resp_header_min - RESP_BODY_END_BYTES;
 
+	printf("----VALIDATE RESPONSE BODY----\n");
 	printf("Packet_len: %d  Resp_body_without_end_bytes: %d\n", packet_len, *resp_body);
 	if(*resp_body <= 0) {
 		printf("ERROR: Empty Response Body\n");
@@ -184,6 +179,7 @@ unsigned char validate_resp_body_get_page(unsigned int packet_len,int *resp_body
 		//printf("resp[1] = %d resp[0] = %d\n",recv_response[packet_len-1], recv_response[packet_len-2]);
 		return 0;
 	}
+	printf("----RESPONSE BODY VALIDATED----\n");
 	return 1;
 }
 //--------------------------------------------------------
@@ -193,7 +189,6 @@ void Send_Request(unsigned int size) {
 	char * myfifo = "/tmp/myfifo";
 	sendto(sockfd, (const char *)send_req_buffer, size,
 	        MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-
 }
 //-------------------------------------------------------
 //Request Header to Call Mirror Services
@@ -243,7 +238,7 @@ int prepare_send_req_header(unsigned char command_code) {
 //----------------------------------------------------------------------------------------
 void Call_Report_Changes_Service() {
 
-	//printf("-->SERVICES: -------CALL MIRROR REPORT CHANGES SERVICE---------\n");
+	printf("-------CALL MIRROR REPORT CHANGES SERVICE---------\n");
 	
 	unsigned char command_code = MIRROR_REPORT_CHANGES;
 	int index_req, len;
@@ -251,7 +246,7 @@ void Call_Report_Changes_Service() {
 
 	//Assign timestamp bytes in the buffer
 	// YY, MM, DD, HH, MM, SS
-	//printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+	printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
 
     send_req_buffer[index_req + 0] = tm.year;
     send_req_buffer[index_req + 1] = tm.month;
@@ -265,11 +260,11 @@ void Call_Report_Changes_Service() {
     send_req_buffer[index_req+TIMESTAMP_BYTES_CNT+1] = 62;
 
     len = index_req + TIMESTAMP_BYTES_CNT + CMD_END_BYTES_CNT;
-    //printf("send_buffer:- ");
+    printf("send_buffer:- ");
     for(int i=0; i < len; i++) {
-     //   printf("%d ", send_req_buffer[i] );
+        printf("%d ", send_req_buffer[i] );
     }
-    //printf("\n");
+    printf("\n");
 
 	Send_Request(len);
 }
@@ -282,11 +277,11 @@ int Process_response_Report_Changes() {
 	unsigned char status_code;
 	int resp_header_min;
 
-	//printf("-->SERVICES: -----PROCESS_RESPONSE_REPORT_CHANGES------\n");
+	printf("-----PROCESS_RESPONSE_REPORT_CHANGES------\n");
 
 	packet_len = Receive_response();
 	if(packet_len == 0) {
-		//printf("Error: Reveived wrong response. File names not returned\n");
+		printf("Error: Reveived wrong response. File names not returned\n");
 		return 0;
 	}
 	status_code = recv_response[RES_SS];
@@ -307,9 +302,15 @@ int Process_response_Report_Changes() {
 		printf("Request body not validated\n");
 		return 0;
 	}
+	printf("Response: ");
+	for(int  i=0; i<packet_len; i++) {
+		printf(" %d ", recv_response[i]);
+	}
+	printf("\n\n");
+
 	index = resp_header_min;
 	total_files_count = resp_body_without_end_bytes/RAIDA_AGENT_FILE_ID_BYTES_CNT;
-	printf("No. of files need to be synchronized: %u\n", total_files_count);
+	printf("No. of files need to be synchronized: %u\n\n", total_files_count);
 
 	for(int i =0; i < total_files_count; i++) {
 		memcpy(&files_id[i][0], &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
@@ -368,8 +369,7 @@ int Process_response_Report_Changes() {
 			strcat(filepath, id);
 			strcat(filepath, ".bin");
 		}
-		printf("File_path: %s\n", filepath);
-		printf("\n");
+		printf("File_path: %s\n\n", filepath);
 		//-------------------------------------------------------
 	}
 	return 1;
@@ -379,7 +379,7 @@ int Process_response_Report_Changes() {
 //--------------------------------------------------------
 void Call_Mirror_Get_Page_Service(unsigned int i) {
 
-	printf("-->SERVICES: -----------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
+	printf("-----------CALL_MIRROR_GET_PAGE_SERVICE------------------\n");
 
 	unsigned char command_code = AGENT_GET_PAGE;
 	int index_req, len;
@@ -390,11 +390,11 @@ void Call_Mirror_Get_Page_Service(unsigned int i) {
 	index_req += RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	
 	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
-		printf("files_id[0] = %d ", files_id[0][j]);
+		printf("files_id[0] = %d  ", files_id[0][j]);
 	}
 	printf("\n");
 	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
-		printf("files_id[0] = %d ", req_file_id[j]);
+		printf("req_file_id = %d\n", req_file_id[j]);
 	}
 	printf("\n");
 
@@ -440,6 +440,13 @@ int Process_response_Get_Page() {
 	if(validate_resp_body_get_page(packet_len, &resp_body_without_end_bytes,&resp_header_min) == 0) {
 		return 0;
 	}
+
+	printf("Response: ");
+	for(int  i=0; i<packet_len; i++) {
+		printf(" %d ", recv_response[i]);
+	}
+	printf("\n\n");
+
 	index = resp_header_min;
 	memcpy(recv_file_id, &recv_response[index], RAIDA_AGENT_FILE_ID_BYTES_CNT);
 	index += RAIDA_AGENT_FILE_ID_BYTES_CNT;
@@ -448,6 +455,14 @@ int Process_response_Get_Page() {
 		printf("Error: Requested File and Received File not same\n");
 		return 0;
 	}
+	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
+		printf("req_file_id = %d  ", req_file_id[j]);
+	}
+	printf("\n");
+	for(int j=0; j < RAIDA_AGENT_FILE_ID_BYTES_CNT;j++) {
+		printf("recv_file_id = %d\n", recv_file_id[j]);
+	}
+	printf("\n");
 
 	file_size = resp_body_without_end_bytes - RAIDA_AGENT_FILE_ID_BYTES_CNT;
 	unsigned int coin_id, table_id, serial_no;

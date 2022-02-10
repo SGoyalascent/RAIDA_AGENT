@@ -202,8 +202,6 @@
 extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 extern time_t t1;
 //-------CALL SERVICES-------------------
-extern unsigned int count, fail;
-
 extern struct sockaddr_in servaddr;
 extern int sockfd;
 extern fd_set select_fds;  
