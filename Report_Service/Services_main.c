@@ -158,7 +158,7 @@ long get_time_cs()
     s  = spec.tv_sec;
     ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds  
     //cs = ms /100;	
-	//printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
+	printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
     return ms;	
 }
 int main() {

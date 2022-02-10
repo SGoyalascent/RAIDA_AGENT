@@ -129,7 +129,7 @@ int listen_request(){
 void process_request(unsigned int packet_len){
 	uint16_t cmd_no=0, coin_id;
 	time_stamp_before = get_time_cs();
-	printf("time_stamp_before: %ld\n", time_stamp_before);
+	//printf("time_stamp_before: %ld\n", time_stamp_before);
 	memset(response,0,RESPONSE_SIZE_MAX-1);
 	cmd_no = udp_buffer[REQ_CM+1];
 	cmd_no |= (((uint16_t)udp_buffer[REQ_CM])<<8);
@@ -180,6 +180,7 @@ unsigned char validate_request_header(unsigned char * buff,int packet_size){
 	printf("---------------Validate Req Header-----------------\n");
 	
 	if(buff[REQ_EN]!=0 && buff[REQ_EN]!=1){
+		printf("Invalid Encryption Code \n");
 		return INVALID_EN_CODE;
 	}
 	if(packet_size< request_header_exp_len){
@@ -233,7 +234,7 @@ void Send_Response(unsigned int size){
 void prepare_resp_header(unsigned char status_code, int total_frames){
 	unsigned char ex_time;
 	time_stamp_after = get_time_cs();
-	printf("time_stamp_after: %ld\n", time_stamp_after);
+	//printf("time_stamp_after: %ld\n", time_stamp_after);
 	if((time_stamp_after-time_stamp_before) > 255){
 		ex_time = 255;
 	}else{
@@ -413,14 +414,12 @@ void get_ModifiedFiles(char * path)
 				}
 			}
 
-			//printf("filename: %s  filepath: %s\n", df_name, df_path);
-			//printf("datestring: %s\n", datestring);
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			//printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
 			printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
-				//printf("index_resp_return_1: %u\n", index_resp);
+				printf("index_resp_return: %u\n", index_resp);
 				return;
 			}
         }	
