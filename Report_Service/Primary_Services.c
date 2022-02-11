@@ -347,7 +347,7 @@ void get_ModifiedFiles(char * path)
 
         if(dir->d_type == DT_REG) {
             
-			printf("filename: %s  filepath: %s\n", df_name, df_path);
+			printf("\nfilename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
             double time_dif;
@@ -365,9 +365,7 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s\n", datestring);
-            //printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", dt->tm_mday,dt->tm_mon+1,dt->tm_year+1900, 
-            //                                                                    dt->tm_hour,dt->tm_min, dt->tm_sec );
+            printf("datestring: %s  ", datestring);
         
             time_dif = difftime(t2, t1);
             printf("time_diff: %g\n", time_dif);
@@ -476,8 +474,6 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	else {
 		strftime(date, sizeof(date), "%c", recv_dt);
 		printf("date: %s\n", date);
-		//printf("Last Modified Time(UTC):- %d-%d-%d  %d:%d:%d\n", recv_dt->tm_mday,recv_dt->tm_mon+1,recv_dt->tm_year+1900, 
-        //                                                                        recv_dt->tm_hour,recv_dt->tm_min, recv_dt->tm_sec );
 	}
 
 	char root_path[256];

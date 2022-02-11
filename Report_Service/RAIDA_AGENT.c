@@ -163,6 +163,8 @@ void get_latest_timestamp(char *path)
     char datestring[256];
     time_t t2;
     double time_dif;
+
+    int root_path_len = strlen(execpath);
     DIR *d = opendir(path); 
     if(d == NULL) {
         return;  
@@ -173,13 +175,22 @@ void get_latest_timestamp(char *path)
         sprintf(f_name, "%s",dir->d_name);
         sprintf(f_path, "%s/%s", path, dir->d_name);
 
-        if((stat(f_path, &statbuf)) == -1) {
-            printf("Error: %s\n", strerror(errno));
-            continue;
-        }
+       
         //if regular file
         if((statbuf.st_mode & S_IFMT) == S_IFREG) {
             printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
+            
+            if((stat(f_path, &statbuf)) == -1) {
+            printf("Error: %s\n", strerror(errno));
+            continue;
+            }
+            char sub_path[500];
+            strcpy(sub_path, &f_path[root_path_len+1]);
+            //printf("sub_path: %s\n", sub_path);
+            if(strcmp(sub_path, f_name) == 0) {
+                continue;
+            }
+            
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
