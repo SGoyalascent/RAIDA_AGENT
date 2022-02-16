@@ -366,7 +366,8 @@ void get_ModifiedFiles(char * path)
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
             printf("datestring: %s  ", datestring);
-        
+
+			printf("time1: %ju    time2: %ju\n", t1, t2);
             time_dif = difftime(t2, t1);
             printf("time_diff: %g\n", time_dif);
             if(time_dif <= 0) {

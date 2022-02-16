@@ -249,6 +249,7 @@ int main() {
     //printf("path: %s\n", path);
     printf("----GET LATEST TIMESTAMP----\n");
     get_latest_timestamp(path);
+    printf("latest_file_time: %ju", t1);
 
     init_udp_socket();
     unsigned char status;
