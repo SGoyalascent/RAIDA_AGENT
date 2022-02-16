@@ -21,7 +21,7 @@ void WelcomeMsg() {
 //------------------------------------------------
 void get_execpath() {
     strcpy(execpath, "/opt/raida/Data");
-    printf("Working_Dir_path: %s\n", execpath);
+    //printf("Working_Dir_path: %s\n", execpath);
 }
 //---------------------------------------------------------
 // Get the current directory path starting from home dir
@@ -38,23 +38,22 @@ void getcurrentpath()
 	i++;
   }	
   strncpy(serverpath,buff,slash_pos);
-  printf("Current_dir_path: %s\n", serverpath);
+  //printf("Current_dir_path: %s\n", serverpath);
 }
 //----------------------------------------------------------
 //Loads raida no from raida_no.txt
 //----------------------------------------------------------
 int load_raida_no(){
 	
-    //printf("-->Load RAIDA No.\n");
     FILE *fp_inp=NULL;
 	int size=0,ch;
 	unsigned char buff[24];
 	char path[256];
-	strcpy(path,serverpath);
-	strcat(path,"/Data_agent/raida_no.txt");
+	strcpy(path,execpath);
+	strcat(path,"/raida_no.txt");
     //printf("path: %s\n", path);
 	if ((fp_inp = fopen(path, "r")) == NULL) {
-		printf("Error: raida_no.txt Cannot be opened , exiting \n");
+        perror("Error: raida_no.txt cannot be opened.");
 		return 1;
 	}
 	while( (ch = fgetc(fp_inp)) != EOF ){
@@ -64,7 +63,6 @@ int load_raida_no(){
 	fp_inp = fopen(path, "r");
 	if(fread(buff, 1, size, fp_inp)<size){
 		printf("Configuration parameters missing in raida_no.txt \n");
-		//fprintf(stderr, "fread() failed: %zu\n", ret);
         return 1;
 	}
 	if(size == 2){
@@ -85,14 +83,13 @@ int load_raida_no(){
 //--------------------------------------------------
 void Read_Agent_Configuration_Files() {
 
-    //printf("-->READ-Agent-Configuration-Files---\n");
     char path[256];
     strcpy(path, serverpath);
     strcat(path, "/Data_agent/agent_config.txt");
     //printf("path: %s\n", path);
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
-        printf("agent_config file not found\n");
+        perror("Error: agent_config.txt file not found\n");
 		return;
     }
     fscanf(myfile, "ip_primary = %255s port_primary_agent = %d ip_mirror = %255s port_mirror_agent = %d ip_witness = %255s port_witness_agent = %d", 
@@ -120,7 +117,7 @@ void read_keys_file() {
     strcat(path, "/Keys/keys.bin");
     printf("path: %s\n", path);
     if((fp = fopen(path, "rb")) == NULL) {
-        printf("->Error: Keys.bin file cannot be opened\n");
+        perror("Error: Keys.bin file cannot be opened\n");
         return;
     }
     while((ch = fgetc(fp)) != EOF) {
