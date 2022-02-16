@@ -330,7 +330,8 @@ unsigned int prepare_resp_body(unsigned int index, unsigned int coin_id, unsigne
 //----------------------------------------------------------------------
 void get_ModifiedFiles(char * path)
 {
-    struct dirent *dir; 
+	printf("received_time: %ju\n", t1);
+	struct dirent *dir; 
     struct stat statbuf;
     struct tm *dt;
 
@@ -341,12 +342,14 @@ void get_ModifiedFiles(char * path)
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        char df_path[500], df_name[256];
+        printf("received_time: %ju\n", t1);
+		char df_path[500], df_name[256];
         sprintf(df_name, "%s",dir->d_name);
         sprintf(df_path, "%s/%s", path, dir->d_name);
 
         if(dir->d_type == DT_REG) {
             
+			printf("received_time: %ju\n", t1);
 			printf("\nfilename: %s  filepath: %s\n", df_name, df_path);
             time_t t2;
             char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
@@ -416,9 +419,9 @@ void get_ModifiedFiles(char * path)
             printf("coin_id: %d  table_id: %d  serial_no: %d\n", coin_id, table_id, serial_no);
 			//printf("index_resp_prev: %u  ", index_resp);
 			index_resp = prepare_resp_body(index_resp, coin_id, table_id, serial_no);
-			printf("index_resp_after: %u\n", index_resp);
+			//printf("index_resp_after: %u\n", index_resp);
 			if((index_resp+RAIDA_AGENT_FILE_ID_BYTES_CNT+RESP_BODY_END_BYTES) > RESPONSE_SIZE_MAX) {
-				printf("index_resp_return: %u\n", index_resp);
+				//printf("index_resp_return: %u\n", index_resp);
 				return;
 			}
         }	
@@ -468,6 +471,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	recv_dt->tm_sec = recv_buffer[5];
 
 	time_t t1 = mktime(recv_dt);
+	printf("received_time: %ju\n", t1);
 	char date[500];
 	if(t1 == -1) {
 		printf("Unable to represent received time in UTC using mktime\n");
@@ -479,6 +483,8 @@ void  execute_Report_Changes(unsigned int packet_len) {
 
 	char root_path[256];
 	strcpy(root_path, execpath);
+	printf("received_time: %ju\n", t1);
+	printf("----Get_Modified_Files------\n");
 	get_ModifiedFiles(root_path);
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
 	index_resp = RESP_HEADER_MIN_LEN;

@@ -171,16 +171,15 @@ void get_latest_timestamp(char *path)
         char f_path[500], f_name[256];
         sprintf(f_name, "%s",dir->d_name);
         sprintf(f_path, "%s/%s", path, dir->d_name);
+        printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
 
-       
-        //if regular file
-        if((statbuf.st_mode & S_IFMT) == S_IFREG) {
-            printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
-            
-            if((stat(f_path, &statbuf)) == -1) {
+        if((stat(f_path, &statbuf)) == -1) {
             printf("Error: %s\n", strerror(errno));
             continue;
-            }
+        }
+        //if regular file
+        if((statbuf.st_mode & S_IFMT) == S_IFREG) {
+            //printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
             char sub_path[500];
             strcpy(sub_path, &f_path[root_path_len+1]);
             //printf("sub_path: %s\n", sub_path);
@@ -191,10 +190,10 @@ void get_latest_timestamp(char *path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s  ", datestring);
+            //printf("datestring: %s  ", datestring);
 
             time_dif = difftime(t2, t1);
-            printf("time_diff: %g\n", time_dif);
+            //printf("time_diff: %g\n", time_dif);
             if(time_dif > 0) {
                 t1 = t2;
 
@@ -204,7 +203,7 @@ void get_latest_timestamp(char *path)
                 tm.hour = dt->tm_hour;
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
-                printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+                //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
             }
         }
         //if directory
@@ -249,7 +248,7 @@ int main() {
     //printf("path: %s\n", path);
     printf("----GET LATEST TIMESTAMP----\n");
     get_latest_timestamp(path);
-    printf("latest_file_time: %ju", t1);
+    printf("latest_file_time: %ju\n", t1);
 
     init_udp_socket();
     unsigned char status;
