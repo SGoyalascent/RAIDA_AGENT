@@ -244,11 +244,11 @@ extern struct timestamp tm;
 //---------------MAIN--------------------------------------
 void get_execpath();
 void WelcomeMsg();
-void Read_Agent_Configuration_Files();
+int Read_Agent_Configuration_Files();
 void getcurrentpath();
 int load_raida_no();
 void get_latest_timestamp(char *);
-void read_keys_file();
+int read_keys_file();
 long get_time_cs();
 
 //---------------CALL SERVICES-----------------------------

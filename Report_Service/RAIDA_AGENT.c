@@ -62,7 +62,7 @@ int load_raida_no(){
 	fclose(fp_inp);
 	fp_inp = fopen(path, "r");
 	if(fread(buff, 1, size, fp_inp)<size){
-		printf("Configuration parameters missing in raida_no.txt \n");
+		printf("Error: Configuration parameters missing in raida_no.txt \n");
         return 1;
 	}
 	if(size == 2){
@@ -81,7 +81,7 @@ int load_raida_no(){
 //--------------------------------------------------
 //READ CONFIG FILE, IP ADDRESS AND PORT
 //--------------------------------------------------
-void Read_Agent_Configuration_Files() {
+int Read_Agent_Configuration_Files() {
 
     char path[256];
     strcpy(path, serverpath);
@@ -90,7 +90,7 @@ void Read_Agent_Configuration_Files() {
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
         perror("Error: agent_config.txt file not found\n");
-		return;
+		return 1;
     }
     fscanf(myfile, "ip_primary = %255s port_primary_agent = %d ip_mirror = %255s port_mirror_agent = %d ip_witness = %255s port_witness_agent = %d", 
     Primary_agent_config.Ip_address, &Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
@@ -102,12 +102,14 @@ void Read_Agent_Configuration_Files() {
     Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
     Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
+    return 0;
+
 }
 
 //-----------------------------------------------
 //READ KEYS.bin FILE and store in the RAM
 //-----------------------------------------------
-void read_keys_file() {
+int read_keys_file() {
     
     FILE *fp = NULL;
     int size = 0, ch;
@@ -115,10 +117,10 @@ void read_keys_file() {
     char buff[KEY_BYTES_CNT*KEYS_COUNT];
     strcpy(path, serverpath);
     strcat(path, "/Keys/keys.bin");
-    printf("path: %s\n", path);
+    //printf("path: %s\n", path);
     if((fp = fopen(path, "rb")) == NULL) {
         perror("Error: Keys.bin file cannot be opened\n");
-        return;
+        return 1;
     }
     while((ch = fgetc(fp)) != EOF) {
         size++;
@@ -126,14 +128,14 @@ void read_keys_file() {
     printf("Keys_file_size: %d\n", size);
     if(size != KEY_BYTES_CNT*KEYS_COUNT) {
         printf("Error: Keys file size does not match. Keys missing\n");
-        return;
+        return 1;
     }
     fclose(fp);
 
     fp = fopen(path, "rb");
     if(fread(buff, 1, size, fp) < size) {
-        printf("Keys bytes missing\n");
-        return;
+        printf("Error: Keys bytes missing\n");
+        return 1;
     }
     fclose(fp);
     
@@ -147,7 +149,7 @@ void read_keys_file() {
         }
         printf("\n");
     }
-
+    return 0;
 }
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
@@ -171,7 +173,6 @@ void get_latest_timestamp(char *path)
         char f_path[500], f_name[256];
         sprintf(f_name, "%s",dir->d_name);
         sprintf(f_path, "%s/%s", path, dir->d_name);
-        printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
 
         if((stat(f_path, &statbuf)) == -1) {
             printf("Error: %s\n", strerror(errno));
@@ -204,7 +205,11 @@ void get_latest_timestamp(char *path)
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
                 //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
+                time_t t3 = mktime(dt);
+	            //printf("t3: %ju\n", t3);
+            
             }
+
         }
         //if directory
         else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && (strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0)) {
@@ -239,16 +244,16 @@ int main() {
     WelcomeMsg();
     getcurrentpath();
     get_execpath();
-    load_raida_no();
-    Read_Agent_Configuration_Files();
-    //read_keys_file();
+    if(load_raida_no() || read_keys_file() || Read_Agent_Configuration_Files()) {
+        exit(0);
+    }
 
     char path[256];
     strcpy(path, execpath);
     //printf("path: %s\n", path);
-    printf("----GET LATEST TIMESTAMP----\n");
+    //printf("----GET LATEST TIMESTAMP----\n");
     get_latest_timestamp(path);
-    printf("latest_file_time: %ju\n", t1);
+    //printf("latest_file_time: %ju\n", t1);
 
     init_udp_socket();
     unsigned char status;

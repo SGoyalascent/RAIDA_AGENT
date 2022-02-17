@@ -330,33 +330,33 @@ unsigned int prepare_resp_body(unsigned int index, unsigned int coin_id, unsigne
 //----------------------------------------------------------------------
 void get_ModifiedFiles(char * path)
 {
-	printf("received_time: %ju\n", t1);
 	struct dirent *dir; 
     struct stat statbuf;
     struct tm *dt;
+	DIR *d;
+	int root_path_len;
+	double time_dif;
+	time_t t2;
 
-	int root_path_len = strlen(execpath);
-    DIR *d = opendir(path); 
+	root_path_len = strlen(execpath);
+    d = opendir(path); 
     if(d == NULL) {
         return;  
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        printf("received_time: %ju\n", t1);
 		char df_path[500], df_name[256];
         sprintf(df_name, "%s",dir->d_name);
         sprintf(df_path, "%s/%s", path, dir->d_name);
 
         if(dir->d_type == DT_REG) {
             
-			printf("received_time: %ju\n", t1);
 			printf("\nfilename: %s  filepath: %s\n", df_name, df_path);
-            time_t t2;
-            char datestring[256], sub_path[500], coin[20], table[20];  //coin_1234         //Statements
-            double time_dif;
+            char datestring[256], sub_path[500], coin_str[20], table_str[20], str_coin_id[10], *token;
+            unsigned int coin_id, table_id, serial_no; 
 
             if(stat(df_path, &statbuf) == -1) {
-                fprintf(stderr,"Error: %s\n", strerror(errno));
+                printf("Error: %s\n", strerror(errno));
                 continue;
             }
             strcpy(sub_path, &df_path[root_path_len+1]);
@@ -368,50 +368,46 @@ void get_ModifiedFiles(char * path)
             dt = gmtime(&statbuf.st_mtime);
             t2 = statbuf.st_mtime;
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
-            printf("datestring: %s  ", datestring);
+            //printf("datestring: %s  ", datestring);
 
-			printf("time1: %ju    time2: %ju\n", t1, t2);
+			//printf("time1: %ju    time2: %ju\n", t1, t2);
             time_dif = difftime(t2, t1);
             printf("time_diff: %g\n", time_dif);
             if(time_dif <= 0) {
                 printf("File already Syncronized.\n");
                 continue;
             }
-            printf("File Modified. Need to be Syncronized.\n");
-            
-            unsigned char c_id[10];  //1234 from coin[]
-			unsigned int coin_id, table_id, serial_no; 
+            //printf("File Modified. Need to be Syncronized.\n");
 
-            char *token;
             token = strtok(sub_path, "/");
-            strcpy(coin, token);
+            strcpy(coin_str, token);
             
-			if(strcmp(coin, "my_id_coins") == 0) {
+			if(strcmp(coin_str, "my_id_coins") == 0) {
                 coin_id = 255;
                 table_id = 0;
                 serial_no = atoi(df_name); 
             }
-            else if(strcmp(coin, "coin_owners") == 0) {  
+            else if(strcmp(coin_str, "coin_owners") == 0) {  
                 coin_id = 254;
 				token = strtok(NULL, "/");
-            	strcpy(table, token);
-				if(strcmp(table, "owners") == 0) {
+            	strcpy(table_str, token);
+				if(strcmp(table_str, "owners") == 0) {
 					table_id = 2;
 				}
-				else if(strcmp(table, "statements") == 0) {
+				else if(strcmp(table_str, "statements") == 0) {
                 	table_id = 3;
             	}
 				serial_no = atoi(df_name);
             }
 			else {
 				token = strtok(NULL, "/");
-				strcpy(table, token);
-				token = strtok(coin, "_");
+				strcpy(table_str, token);
+				token = strtok(coin_str, "_");
 				token = strtok(NULL,"_");
-				strcpy(c_id, token);
-				coin_id = atoi(c_id);
+				strcpy(str_coin_id, token);
+				coin_id = atoi(str_coin_id);
 				serial_no = atoi(df_name);   //12345.bin file -->  12345
-				if(strcmp(table, "ANs") == 0) {
+				if(strcmp(table_str, "ANs") == 0) {
 					table_id = 1;
 				}
 			}
@@ -434,7 +430,6 @@ void get_ModifiedFiles(char * path)
 				//printf("index_resp_return_2: %u\n", index_resp);
 				return;
 			}
-			
         }
 	}
     closedir(d);
@@ -470,7 +465,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	recv_dt->tm_min = recv_buffer[4];
 	recv_dt->tm_sec = recv_buffer[5];
 
-	time_t t1 = mktime(recv_dt);
+	t1 = mktime(recv_dt);
 	printf("received_time: %ju\n", t1);
 	char date[500];
 	if(t1 == -1) {
@@ -486,6 +481,7 @@ void  execute_Report_Changes(unsigned int packet_len) {
 	printf("received_time: %ju\n", t1);
 	printf("----Get_Modified_Files------\n");
 	get_ModifiedFiles(root_path);
+	printf("received_time: %ju\n", t1);
 	prepare_udp_resp_body(RAIDA_AGENT_NO_CHANGES, MIRROR_REPORT_RETURNED);
 	index_resp = RESP_HEADER_MIN_LEN;
 }
