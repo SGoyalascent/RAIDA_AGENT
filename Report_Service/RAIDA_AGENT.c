@@ -1,13 +1,11 @@
-// When in Primary mode, Call the Mirror Report Changes service
-// Send request to the Mirror server, receive the response send from the mirror
-// Assume we are using Standard 22 bytes Header
 
 #include "RAIDA_Agent.h"
 
-char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+char execpath[256], serverpath[256];
 struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
 struct timestamp tm;
 struct server_config server_config_obj;
+struct key_table key_table_obj[ENCRY2_KEYS_MAX] = {0};
 time_t t1 = 0;
 
 //-----------------------------------------------
@@ -85,7 +83,7 @@ int Read_Agent_Configuration_Files() {
 
     char path[256];
     strcpy(path, serverpath);
-    strcat(path, "/Data_agent/agent_config.txt");
+    strcat(path, "/Data/agent_config.txt");
     //printf("path: %s\n", path);
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
@@ -98,12 +96,9 @@ int Read_Agent_Configuration_Files() {
 
     fclose(myfile);
     
-    printf("ip_primary = %s  port_primary_agent = %d  ip_mirror = %s  port_mirror_agent = %d  ip_witness = %s  port_witness_agent = %d\n", 
-    Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , 
-    Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
+    printf("ip_primary = %s  port_primary_agent = %d  ip_mirror = %s  port_mirror_agent = %d  ip_witness = %s  port_witness_agent = %d\n", Primary_agent_config.Ip_address, Primary_agent_config.port_number, Mirror_agent_config.Ip_address , Mirror_agent_config.port_number, Witness_agent_config.Ip_address, Witness_agent_config.port_number);
 
     return 0;
-
 }
 
 //-----------------------------------------------
@@ -114,7 +109,7 @@ int read_keys_file() {
     FILE *fp = NULL;
     int size = 0, ch;
     char path[500];
-    char buff[KEY_BYTES_CNT*KEYS_COUNT];
+    char buff[KEY_BYTES_CNT*ENCRY2_KEYS_MAX];
     strcpy(path, serverpath);
     strcat(path, "/Keys/keys.bin");
     //printf("path: %s\n", path);
@@ -126,7 +121,7 @@ int read_keys_file() {
         size++;
     }
     printf("Keys_file_size: %d\n", size);
-    if(size != KEY_BYTES_CNT*KEYS_COUNT) {
+    if(size != KEY_BYTES_CNT*ENCRY2_KEYS_MAX) {
         printf("Error: Keys file size does not match. Keys missing\n");
         return 1;
     }
@@ -140,12 +135,13 @@ int read_keys_file() {
     fclose(fp);
     
     int index = 0;
-    for(int i = 0;i < KEYS_COUNT;i++) {
-        printf("KEY_%d: ", i+1);
-        memcpy(&keys_bytes[i][0], &buff[index], KEY_BYTES_CNT);
+    for(int i = 0;i < ENCRY2_KEYS_MAX;i++) {
+        printf("Key_Id-%d: ", i+1);
+        memcpy(key_table_obj[i].key, &buff[index], KEY_BYTES_CNT);
+        key_table_obj[i].key_id = i+1;
         index += KEY_BYTES_CNT;
         for(int j = 0; j < KEY_BYTES_CNT; j++) {
-            printf("%d ", keys_bytes[i][j]);
+            printf("%hhn ", key_table_obj[i].key);
         }
         printf("\n");
     }
@@ -159,29 +155,28 @@ void get_latest_timestamp(char *path)
     struct dirent *dir; 
     struct stat statbuf;
     struct tm *dt;
-    char datestring[256];
     time_t t2;
     double time_dif;
 
     int root_path_len = strlen(execpath);
     DIR *d = opendir(path); 
     if(d == NULL) {
+        printf("Error: %s\n", strerror(errno));
         return;  
     }
     while ((dir = readdir(d)) != NULL) 
     {
-        char f_path[500], f_name[256];
+        char f_path[500], f_name[256], datestring[256], sub_path[500];
         sprintf(f_name, "%s",dir->d_name);
         sprintf(f_path, "%s/%s", path, dir->d_name);
 
-        if((stat(f_path, &statbuf)) == -1) {
-            printf("Error: %s\n", strerror(errno));
-            continue;
-        }
         //if regular file
-        if((statbuf.st_mode & S_IFMT) == S_IFREG) {
+        if(dir->d_type == DT_REG) {
             //printf("\nfilename: %s  filepath: %s\n", f_name, f_path);
-            char sub_path[500];
+            if((stat(f_path, &statbuf)) == -1) {
+                printf("Error: %s\n", strerror(errno));
+                continue;
+            }
             strcpy(sub_path, &f_path[root_path_len+1]);
             //printf("sub_path: %s\n", sub_path);
             if(strcmp(sub_path, f_name) == 0) {
@@ -192,7 +187,6 @@ void get_latest_timestamp(char *path)
             t2 = statbuf.st_mtime;    //modified time  mtime
             strftime(datestring, sizeof(datestring), " %x-%X", dt);
             //printf("datestring: %s  ", datestring);
-
             time_dif = difftime(t2, t1);
             //printf("time_diff: %g\n", time_dif);
             if(time_dif > 0) {
@@ -205,14 +199,12 @@ void get_latest_timestamp(char *path)
                 tm.minutes = dt->tm_min;
                 tm.second = dt->tm_sec;
                 //printf("Last Modified Time(UTC):  %d-%d-%d  %d:%d:%d\n",tm.day, tm.month+1,tm.year+1900, tm.hour, tm.minutes, tm.second);
-                time_t t3 = mktime(dt);
+                //time_t t3 = mktime(dt);
 	            //printf("t3: %ju\n", t3);
-            
             }
-
         }
         //if directory
-        else if(((statbuf.st_mode & S_IFMT) == S_IFDIR) && (strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0)) {
+        else if((dir->d_type == DT_DIR) && (strcmp(dir->d_name,".")!=0 && strcmp(dir->d_name,"..")!=0)) {
             //printf("dirname: %s  dirpath: %s\n", f_name, f_path);
             get_latest_timestamp(f_path);
         }
@@ -221,22 +213,19 @@ void get_latest_timestamp(char *path)
 }
 
 //----------------------------------------------------------
-// Returns time in centi seconds
+// Returns time in micro seconds
 //----------------------------------------------------------
-/*
 long get_time_cs()
 {
-    long            ms,cs; // Microseconds
+    long            ms; // Microseconds
     time_t          s;  // Seconds
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
     s  = spec.tv_sec;
     ms = round(spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
-    //cs = ms /100;	
 	//printf("Current time: %"PRIdMAX".%03ld seconds since the Epoch\n",(intmax_t)s, ms);
     return ms;	
 }
-*/
 
 int main() {
 
@@ -248,30 +237,30 @@ int main() {
         exit(0);
     }
 
+    unsigned int time_before, time_after, exec_time;
+
+    time_before = get_time_cs();
     char path[256];
     strcpy(path, execpath);
-    //printf("path: %s\n", path);
-    //printf("----GET LATEST TIMESTAMP----\n");
     get_latest_timestamp(path);
-    //printf("latest_file_time: %ju\n", t1);
+    time_after = get_time_cs();
+    exec_time = time_after - time_before;
+    printf("get_TimeStamp_exec_time: %u microseconds\n", exec_time);
 
     init_udp_socket();
     unsigned char status;
     Call_Report_Changes_Service();
     status = Process_response_Report_Changes();
     
-    //Call_Mirror_Get_Page_Service(0);
-    //Process_response_Get_Page();
-    
     if(status == 1) {
-        /*
+        
         for(unsigned int i = 0; i < total_files_count;i++) {
             printf("MAIN: CALL- GET-page-service\n");
             Call_Mirror_Get_Page_Service(i);
             printf("MAIN: Process-Get-page\n");
             Process_response_Get_Page();
         }
-        */
+        
     }
     return 0;
 

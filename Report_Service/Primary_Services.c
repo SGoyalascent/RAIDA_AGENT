@@ -341,18 +341,19 @@ void get_ModifiedFiles(char * path)
 	root_path_len = strlen(execpath);
     d = opendir(path); 
     if(d == NULL) {
-        return;  
+        printf("Error: %s\n", strerror(errno));
+		return;  
     }
     while ((dir = readdir(d)) != NULL) 
     {
-		char df_path[500], df_name[256];
+		char df_path[256], df_name[256];
         sprintf(df_name, "%s",dir->d_name);
         sprintf(df_path, "%s/%s", path, dir->d_name);
 
         if(dir->d_type == DT_REG) {
             
 			printf("\nfilename: %s  filepath: %s\n", df_name, df_path);
-            char datestring[256], sub_path[500], coin_str[20], table_str[20], str_coin_id[10], *token;
+            char datestring[256], sub_path[256], coin_str[24], table_str[24], str_coin_id[16], *token;
             unsigned int coin_id, table_id, serial_no; 
 
             if(stat(df_path, &statbuf) == -1) {

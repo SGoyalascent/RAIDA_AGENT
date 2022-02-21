@@ -18,7 +18,11 @@
 #include <math.h>
 
 //#include "Agent_Services.h"
+#define ENCRYP_NONE					0
+#define ENCRYP_128_AES_CTR_SN			1
+#define ENCRYP_128_AES_CTR_KEY_TABLE	2	
 
+#define ENCRY2_KEYS_MAX			10000
 //--------------------------------------------------------------------
 #define FRAME_TIME_OUT_SECS		    2 
 #define RESPONSE_TIME_OUT_SECS      10
@@ -195,11 +199,10 @@
 
 #define SN_SIZE                     14
 #define FILES_COUNT_MAX           9360
-#define KEYS_COUNT                10000
 #define AGENT_FRAMES_MAX           64
 
 //------MAIN--------------------------
-extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+extern char execpath[256], serverpath[256];
 extern time_t t1;
 //-------CALL SERVICES-------------------
 extern struct sockaddr_in servaddr;
@@ -232,14 +235,16 @@ union conversion {
 extern union conversion byteObj;
 
 struct timestamp {
-    unsigned char year;
-    unsigned char month;
-    unsigned char day;
-    unsigned char hour;
-    unsigned char minutes;
-    unsigned char second;
+    unsigned char year, month, day;
+    unsigned char hour, minutes,second;
 };
 extern struct timestamp tm;
+
+struct key_table{
+	uint32_t key_id;
+	unsigned char key[KEY_BYTES_CNT];
+};
+extern struct key_table key_table_obj[ENCRY2_KEYS_MAX];
 
 //---------------MAIN--------------------------------------
 void get_execpath();

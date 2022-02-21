@@ -45,8 +45,8 @@ int load_raida_no(){
 	int size=0,ch;
 	unsigned char buff[24];
 	char path[256];
-	strcpy(path,serverpath);
-	strcat(path,"/Data_agent/raida_no.txt");
+	strcpy(path,execpath);
+	strcat(path,"/raida_no.txt");
     printf("path: %s\n", path);
 	if ((fp_inp = fopen(path, "r")) == NULL) {
 		printf("->Error: raida_no.txt Cannot be opened , exiting \n");
@@ -82,7 +82,7 @@ void Read_Agent_Configuration_Files() {
     printf("-->READ-Agent-Configuration-Files---\n");
     char path[256];
     strcpy(path, serverpath);
-    strcat(path, "/Data_agent/agent_config.txt");
+    strcat(path, "/Data/agent_config.txt");
     printf("path: %s\n", path);
     FILE *myfile = fopen(path, "r");
     if(myfile == NULL) {
