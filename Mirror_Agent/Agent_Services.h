@@ -16,17 +16,20 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "RAIDA_Agent.h"
 
+#define ENCRYP_NONE					    0
+#define ENCRYP_128_AES_CTR_SN			1
+#define ENCRYP_128_AES_CTR_KEY_TABLE	2	
+#define ENCRY2_KEYS_MAX			        10000
 //--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		1 
-#define UDP_BUFF_SIZE 			65535
-//------------------------------------------------------------------
+#define FRAME_TIME_OUT_SECS		    1 
+#define RESPONSE_TIME_OUT_SECS      10
+#define UDP_BUFF_SIZE 			    65535
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
-#define RESPONSE_SIZE_MAX 		65535
+#define RESPONSE_SIZE_MAX 		    65535
 
-#define VER 255
+#define VER                         255
 //-----------------------------------------------------------------
 //Indexs at which the bytes start
 #define REQ_CL  					0
@@ -54,37 +57,31 @@
 #define REQ_NO_8				21
 
 #define REQ_HEAD_MIN_LEN 		22
+#define REQ_END					62
 //-------------------------------------------------------------
 #define TY_BYTES_CNT				1
 #define TT_BYTES_CNT				1
 #define RA_BYTES_CNT				1
 #define DENOM_BYTES_CNT			1
-#define PAGE_NO_BYTES_CNT		1
-#define RAIDA_BYTE_CNT			1
-#define ROWS_BYTES_CNT			1
+
+#define PAGE_NO_BYTES_CNT		    1
+#define RAIDA_BYTE_CNT			    1
+#define ROWS_BYTES_CNT			    1
 #define YY_BYTES_CNT				1
-#define MM_BYTES_CNT			1
+#define MM_BYTES_CNT			    1
 #define DD_BYTES_CNT				1
-#define COIN_TYPE_BYTES_CNT		1
-#define MFS_BYTES_CNT			1
-#define FREE_ID_BYTES_CNT			1
-#define CMD_END_BYTES_CNT		2
+
+#define CMD_END_BYTES_CNT		    2
 #define SN_BYTES_CNT				3	
-#define OWNER_ID_BYTES_CNT		3
+#define OWNER_ID_BYTES_CNT		    3
 #define RECORD_BYTES_CNT			3
 #define KEY_ID_BYTES_CNT			3
-#define TK_BYTES_CNT				4
-#define MS_BYTES_CNT			4
-#define AMT_BYTES_CNT			4
 #define HS_BYTES_CNT				4
-#define EN_BYTES_CNT				5
-#define FREE_ID_SERV_LOCK_TIME		6
-#define DT_BYTES_CNT				7	
+#define EN_BYTES_CNT				5	
 #define RESP_BUFF_MIN_CNT			12
-#define FIX_SRNO_MATCH_CNT		13
 
-#define ENCRYPTION_CONFIG_BYTES  16
-#define NOUNCE_BYTES_CNT         16
+#define ENCRYPTION_CONFIG_BYTES     16
+#define NOUNCE_BYTES_CNT            16
 
 #define GUID_BYTES_CNT 			16
 #define AN_BYTES_CNT 			16
@@ -122,6 +119,7 @@
 #define RES_HS 						8
 
 #define RESP_HEADER_MIN_LEN         12
+#define RESP_BODY_END_BYTES         2
 //---------Status Error codes----------------------------------------
 #define INVALID_CLOUD_ID 		   				1
 #define RAIDA_ OFFLINE 			   			2
@@ -223,14 +221,15 @@
 #define AGENT_WITNESS               3
 
 #define SN_SIZE                     14
-#define FILES_COUNT_MAX           10000
+#define FILES_COUNT_MAX           9360
 #define KEYS_COUNT                10000
-#define AGENT_FRAMES_MAX           66
+#define AGENT_FRAMES_MAX           64
 
 
-
+//------MAIN--------------------------
+extern char execpath[256], serverpath[256], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
 //-------------SERVICES----------------------
-extern char execpath[256], file_path[500];
+extern char file_path[500];
 extern time_t t1;
 extern struct sockaddr_in servaddr;
 extern struct timeval timeout;
@@ -250,6 +249,28 @@ union conversion {
 };
 extern union conversion byteObj;
 
+struct agent_config {
+    char Ip_address[50];
+    unsigned int port_number;
+};
+extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+
+struct server_config {
+	unsigned char raida_id;
+	unsigned int bytes_per_frame;
+};
+extern struct server_config server_config_obj;
+
+struct timestamp {
+    unsigned char year;
+    unsigned char month;
+    unsigned char day;
+    unsigned char hour;
+    unsigned char minutes;
+    unsigned char second;
+};
+extern struct timestamp tm;
+
 //---------------MAIN--------------------------------------
 void get_execpath();
 void set_time_out(unsigned char);
@@ -266,7 +287,8 @@ unsigned int prepare_resp_body(unsigned int , unsigned int , unsigned int , unsi
 void get_ModifiedFiles(char * );
 void  execute_Report_Changes(unsigned int );
 void execute_Get_Page(unsigned int );
-void Get_File_Contents(char );
+void Get_File_Contents(char []);
+long get_time_cs();
 
 
 

@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <inttypes.h>
 #include <fcntl.h>
@@ -16,17 +17,20 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "Agent_Services.h"
-
-//--------------------------------------------------------------------
-#define FRAME_TIME_OUT_SECS		1 
-#define UDP_BUFF_SIZE 			65535
-//------------------------------------------------------------------
+//---------------------------------------------------------
+#define ENCRYP_NONE					    0
+#define ENCRYP_128_AES_CTR_SN			1
+#define ENCRYP_128_AES_CTR_KEY_TABLE	2	
+#define ENCRY2_KEYS_MAX			        10000
+//-------------------------------------------------------------
+#define FRAME_TIME_OUT_SECS		    1 
+#define RESPONSE_TIME_OUT_SECS      2
 #define REQUEST_HEADER_MAX 		    48
 #define MAXLINE                     1024
-#define RESPONSE_SIZE_MAX 		65535
+#define UDP_BUFF_SIZE 			    65535
+#define RESPONSE_SIZE_MAX 		    65535
 
-#define VER 255
+#define VER                         255
 //-----------------------------------------------------------------
 //Indexs at which the bytes start
 #define REQ_CL  					0
@@ -54,67 +58,38 @@
 #define REQ_NO_8				21
 
 #define REQ_HEAD_MIN_LEN 		22
-//-------------------------------------------------------------
-#define TY_BYTES_CNT				1
-#define TT_BYTES_CNT				1
-#define RA_BYTES_CNT				1
-#define DENOM_BYTES_CNT			1
+#define REQ_END					62
+//----------------------------------------------------------------
 #define PAGE_NO_BYTES_CNT		1
 #define RAIDA_BYTE_CNT			1
 #define ROWS_BYTES_CNT			1
+
 #define YY_BYTES_CNT				1
-#define MM_BYTES_CNT			1
+#define MM_BYTES_CNT			    1
 #define DD_BYTES_CNT				1
-#define COIN_TYPE_BYTES_CNT		1
-#define MFS_BYTES_CNT			1
-#define FREE_ID_BYTES_CNT			1
-#define CMD_END_BYTES_CNT		2
+
+#define CMD_END_BYTES_CNT		    2
+#define RESP_BODY_END_BYTES         2
 #define SN_BYTES_CNT				3	
-#define OWNER_ID_BYTES_CNT		3
-#define RECORD_BYTES_CNT			3
 #define KEY_ID_BYTES_CNT			3
-#define TK_BYTES_CNT				4
-#define MS_BYTES_CNT			4
-#define AMT_BYTES_CNT			4
 #define HS_BYTES_CNT				4
 #define EN_BYTES_CNT				5
-#define FREE_ID_SERV_LOCK_TIME		6
-#define DT_BYTES_CNT				7	
 #define RESP_BUFF_MIN_CNT			12
-#define FIX_SRNO_MATCH_CNT		13
 
-#define ENCRYPTION_CONFIG_BYTES  16
-#define NOUNCE_BYTES_CNT         16
-
-#define GUID_BYTES_CNT 			16
-#define AN_BYTES_CNT 			16
-#define PAN_BYTES_CNT 			16
-#define PG_BYTES_CNT	 			16
-#define KEY_BYTES_CNT			16
+#define ENCRYPTION_CONFIG_BYTES     16
+#define NOUNCE_BYTES_CNT            16
+#define KEY_BYTES_CNT			    16
 #define CH_BYTES_CNT				16
-#define PWD_BYTES_CNT			16
-#define LEGACY_RAIDA_TK_BYTES_CNT		22
-#define MD_HASH_BYTES_CNT		32
-#define META_DATA_BYTES_CNT		50
-
-#define REQ_END					62
-#define RESP_END                62
-
-#define KEY_HASH_BYTES_CNT		64
-
 //-------------------------------------------------
 #define KEYS_MAX				100
-#define ROWS_MUL_FACTOR			100
-#define MAX_ROWS_SHOW_STAT		255	
 #define FRAMES_MAX				100
 #define EN_CODES_MAX			255
 #define DEFAULT_YEAR			2000
-#define COINS_MAX				2000
 #define SECS_IN_DAY				60 * 60 *24				1
 
 //------Indexs for Response Header----------------------------
-#define RES_RI  						0
-#define RES_SH  						1
+#define RES_RI  					0
+#define RES_SH  					1
 #define RES_SS 	 					2
 #define RES_EX 						3
 #define RES_RE 						4
@@ -122,9 +97,10 @@
 #define RES_HS 						8
 
 #define RESP_HEADER_MIN_LEN         12
+#define RESP_END                    62
 //---------Status Error codes----------------------------------------
 #define INVALID_CLOUD_ID 		   				1
-#define RAIDA_ OFFLINE 			   			2
+#define RAIDA_OFFLINE 			   			2
 #define INVALID_FRAME_CNT 	 				15
 #define INVALID_PACKET_LEN 	 				16
 #define FRAME_TIME_OUT	 	 				17
@@ -149,9 +125,6 @@
 #define SN_ALL_READY_IN_USE					40
 #define SERVICE_LOCKED						41
 
-#define AGENT_GET_PAGE                      40
-#define MIRROR_REPORT_CHANGES               45
-
 #define FAILED_TO_AUTHENTICATE					64
 #define PAGE_NOT_FOUND						66
 #define BREAK_COUNTER_FEIT					70
@@ -172,7 +145,7 @@
 #define RAIDA_AGENT_PRIMARY_DOWN            104
 #define MIRROR_MESSAGE_RECEIVED             105
 #define MIRROR_REPORT_RETURNED              106
-#define MIRROR_REQUESTED_FILE_NOT_EXIST     107
+#define MIRROR_FILE_NOT_FOUND               107
 
 #define IDENTIFY_COIN_FOUND					192
 #define IDENTIFY_COIN_NOT_FOUND				193
@@ -182,19 +155,17 @@
 #define FIND_ALL_PA							210
 #define FIND_MIXED							211
 #define ALL_PASS							241
-#define ALL_FAIL								242
-#define MIX								243
+#define ALL_FAIL							242
+#define MIX								    243
 #define SUCCESS								250
 #define FAIL								251
 #define NO_ERR_CODE	 		   				255
-//----------Coin Converter Command Codes---------------------
-#define NO_RESPONSE                    244
-#define NO_TICKET_FOUND                245
-//----------Command codes-----------------------------------------
-#define CMD_COIN_CONVERTER 					215
+//----------Command codes----------------------------------------
 #define CMD_ECHO							4
-
-#define STATE_WAIT_START						1
+#define AGENT_GET_PAGE                      40
+#define MIRROR_REPORT_CHANGES               45
+//-------------------------------------------------------------
+#define STATE_WAIT_START					1
 #define STATE_START_RECVD					2
 #define STATE_WAIT_END						3
 #define STATE_END_RECVD						4
@@ -204,35 +175,34 @@
 
 //-----------RAIDA Agent Codes---------------------------------------
 
-#define TABLE_ID_ANS                0
-#define TABLE_ID_OWNERS             1
-#define TABLE_ID_EMAIL_RECOVER      2
-#define TABLE_ID_STATEMENTS         3 
-#define TABLE_ID_LOSS_COIN          4
+#define TABLE_ID_NO_TABLE               0
+#define TABLE_ID_ANS                    1
+#define TABLE_ID_OWNERS                 2
+#define TABLE_ID_STATEMENTS             3 
+#define TABLE_ID_LOSS_COIN_REPORT       4
+#define TABLE_ID_EMAIL_RECOVER          5
+
+#define COIN_ID_COIN_OWNERS             254
+#define COIN_ID_MY_ID_COINS             255
 
 #define RAIDA_AGENT_TABLE_ID_BYTES_CNT          1
 #define RAIDA_AGENT_COIN_ID_BYTES_CNT           2
 #define RAIDA_AGENT_SN_NO_BYTES_CNT             4
-#define TIMESTAMP_BYTES_CNT		            6
+#define TIMESTAMP_BYTES_CNT		                6
 #define RAIDA_AGENT_FILE_ID_BYTES_CNT           7
-
-#define RESP_BODY_END_BYTES                  2
 
 #define AGENT_PRIMARY               1
 #define AGENT_MIRROR                2
 #define AGENT_WITNESS               3
 
 #define SN_SIZE                     14
-#define FILES_COUNT_MAX           10000
-#define KEYS_COUNT                10000
-#define AGENT_FRAMES_MAX           66
+#define FILES_COUNT_MAX           9360
+#define AGENT_FRAMES_MAX           64
 
 //------MAIN--------------------------
-extern char execpath[256], serverpath[256], Agent_Mode[10], keys_bytes[KEYS_COUNT][KEY_BYTES_CNT];
+extern char execpath[256], serverpath[256];
 extern time_t t1;
-
 //-------CALL SERVICES-------------------
-
 extern struct sockaddr_in servaddr;
 extern int sockfd;
 extern fd_set select_fds;  
@@ -243,43 +213,43 @@ extern unsigned int total_files_count;
 
 //--------------------------------------------
 struct agent_config {
-    const char* Ip_address;
+    char Ip_address[50];
     unsigned int port_number;
 };
-extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
-
 struct server_config {
 	unsigned char raida_id;
 	unsigned int bytes_per_frame;
 };
-extern struct server_config server_config_obj;
-
 union conversion {
 	uint32_t val32;
     unsigned int val;
     unsigned char byte2[2];
 	unsigned char byte4[4];
 };
-extern union conversion byteObj;
-
 struct timestamp {
-    unsigned char year;
-    unsigned char month;
-    unsigned char day;
-    unsigned char hour;
-    unsigned char minutes;
-    unsigned char second;
+    unsigned char year, month, day;
+    unsigned char hour, minutes,second;
 };
+struct key_table{
+	uint32_t key_id;
+	unsigned char key[KEY_BYTES_CNT];
+};
+
+extern struct agent_config Primary_agent_config, Mirror_agent_config, Witness_agent_config;
+extern struct server_config server_config_obj;
+extern union conversion byteObj;
 extern struct timestamp tm;
+extern struct key_table key_table_obj[ENCRY2_KEYS_MAX];
 
 //---------------MAIN--------------------------------------
-void get_execpath();
 void WelcomeMsg();
-void Read_Agent_Configuration_Files();
+void get_execpath();
 void getcurrentpath();
+int Read_Agent_Configuration_Files();
 int load_raida_no();
-void get_latest_timestamp(char *);
-void read_keys_file();
+int read_keys_file();
+int get_latest_timestamp(char *);
+long get_time_cs();
 
 //---------------CALL SERVICES-----------------------------
 int init_udp_socket();
@@ -291,9 +261,10 @@ unsigned char validate_resp_body_get_page(unsigned int,int *,int *);
 void Send_Request(unsigned int);
 int prepare_send_req_header(unsigned char);
 void Call_Report_Changes_Service();
-unsigned char Process_response_Report_Changes();
+int Process_response_Report_Changes();
 void Call_Mirror_Get_Page_Service(unsigned int); 
-unsigned char Process_response_Get_Page();
-void Update_File_Contents(char , unsigned int, unsigned int);
+int Process_response_Get_Page();
+void Update_File_Contents(char [] , unsigned int, unsigned int);
+void response_status_codes(int );
 
 #endif
