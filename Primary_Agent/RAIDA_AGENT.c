@@ -150,7 +150,7 @@ int read_keys_file() {
 //-----------------------------------------------
 //GET LASTEST TIMESTAMP
 //-----------------------------------------------
-void get_latest_timestamp(char *path)
+int get_latest_timestamp(char *path)
 {
     struct dirent *dir; 
     struct stat statbuf;
@@ -162,7 +162,7 @@ void get_latest_timestamp(char *path)
     DIR *d = opendir(path); 
     if(d == NULL) {
         printf("Error: %s\n", strerror(errno));
-        return;  
+        return 1;  
     }
     while ((dir = readdir(d)) != NULL) 
     {
@@ -210,6 +210,7 @@ void get_latest_timestamp(char *path)
         }
     }
     closedir(d);
+    return 0;
 }
 
 //----------------------------------------------------------
@@ -233,36 +234,35 @@ int main() {
     WelcomeMsg();
     getcurrentpath();
     get_execpath();
-    if(load_raida_no() || read_keys_file() || Read_Agent_Configuration_Files()) {
+    //read_keys_file();
+    if(load_raida_no() || Read_Agent_Configuration_Files()) {
         exit(0);
     }
 
-    unsigned int time_before, time_after, exec_time;
-
-    time_before = get_time_cs();
+    unsigned int time_before, time_after, exec_time, status;
     char path[256];
     strcpy(path, execpath);
-    get_latest_timestamp(path);
+    
+    time_before = get_time_cs();
+    status = get_latest_timestamp(path);
     time_after = get_time_cs();
     exec_time = time_after - time_before;
     printf("get_TimeStamp_exec_time: %u microseconds\n", exec_time);
+    if(status == 1) {
+        printf("Error: Could not get the latest file timestamp\n");
+        //exit(0);
+    }
 
     init_udp_socket();
-    unsigned char status;
     Call_Report_Changes_Service();
     status = Process_response_Report_Changes();
     
     if(status == 1) {
-        
         for(unsigned int i = 0; i < total_files_count;i++) {
-            printf("MAIN: CALL- GET-page-service\n");
             Call_Mirror_Get_Page_Service(i);
-            printf("MAIN: Process-Get-page\n");
             Process_response_Get_Page();
         }
-        
     }
     return 0;
-
 }
 
